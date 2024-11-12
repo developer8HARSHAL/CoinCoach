@@ -4,10 +4,10 @@ import Savings from '../lotties/saving.json';
 import Finplan from '../lotties/finplan.json';
 import Games from "../lotties/game.json";
 import Course from './Course';
-import piggy from "../images/piggy.jpg";
-import taxes from "../images/taxes.jpg";
-import invest from "../images/invest.jpg"
-import loans from "../images/loans.jpg";
+import piggy from "../../../public/images/piggy.jpg";
+import taxes from "../../../public/images/taxes.jpg";
+import invest from "../../../public/images/invest.jpg"
+import loans from "../../../public/images/loans.jpg";
 import money from "../lotties/Money.json";
 import Navbar from './Navbar';
 import HomeImg from "../lotties/home_img.json"
@@ -18,13 +18,6 @@ import HomeImg from "../lotties/home_img.json"
 export default function Homepage(){
     return(
         <div>
-
-            {/* Code for navbar */}
-            <div >
-                <Navbar></Navbar>
-
-            </div>
-            {/* Code for navbar */}
 
             <div className="text-center lg:text-7xl text-3xl p-10 lg:text-center lg:py-[120px] lg:mt-[-130px] lg:mb-[30px]">
                 <div className='flex justify-center lg:text-center'><b>Empowering Your Wallet, </b></div>
