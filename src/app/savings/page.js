@@ -1,5 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import budget from '../../public/Budgeting.jpg'
+import fund from '../../public/Fund.jpg'
+import Investment from '../../public/Investment.jpg'
+import depts from '../../public/depts.jpg'
+import saving from '../../public/saving.png'
+
+
 
 export default function SavingsPage() {
   return (
@@ -9,7 +16,7 @@ export default function SavingsPage() {
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="w-full md:w-1/2">
             <Image
-              src="/placeholder.svg?height=400&width=600"
+              src={saving}
               alt="Savings Hero Image"
               width={600}
               height={400}
@@ -49,9 +56,7 @@ export default function SavingsPage() {
                     className="inline-flex items-center mt-4 text-blue-600 hover:text-blue-800 font-semibold"
                   >
                     Learn More
-                    <svg xmlns="http://www.w3.org/2000/svg" className="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6l6 6-6 6" />
-                    </svg>
+                    
                   </Link>
                 </div>
               </div>
@@ -67,21 +72,22 @@ const courses = [
   {
     title: "Budgeting Basics",
     description: "Learn how to create and stick to a budget that works for your lifestyle.",
-    image: "/placeholder.svg?height=200&width=300"
+    image: budget,
   },
   {
     title: "Emergency Fund Strategies",
     description: "Discover the importance of emergency funds and how to build one effectively.",
-    image: "/placeholder.svg?height=200&width=300"
+    image: fund,
   },
   {
     title: "Investment Fundamentals",
     description: "Understand the basics of investing and how to grow your wealth over time.",
-    image: "/placeholder.svg?height=200&width=300"
+    image: Investment,
   },
   {
     title: "Debt Management",
-    description: "Master techniques to manage and eliminate debt for a stronger financial future.",
-    image: "/placeholder.svg?height=200&width=300"
-  }
+    description: "Master techniques to manage and eliminate debt for a stronger future.",
+    image: depts,
+  },
+  
 ]
