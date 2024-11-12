@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react';
-import coffee from "../images/coffee.jpg"
+import coffee from "../../../public/images/coffee.jpg"
 import Image from 'next/image';
 import Link from 'next/link';
 
