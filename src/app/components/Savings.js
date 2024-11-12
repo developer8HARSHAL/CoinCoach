@@ -5,6 +5,7 @@ import fund from '../../../public/Fund.jpg'
 import Investment from '../../../public/Investment.jpg'
 import depts from '../../../public/depts.jpg'
 import saving from '../../../public/saving.png'
+import QuizComponent from './Quiz'
 
 
 
@@ -64,6 +65,7 @@ export default function SavingsPage() {
           </div>
         </div>
       </section>
+      <QuizComponent/>
     </main>
   )
 }

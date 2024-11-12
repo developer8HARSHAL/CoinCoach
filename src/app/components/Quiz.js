@@ -1,33 +1,34 @@
 "use client"
 import { useState } from 'react';
+import coffee from "../images/coffee.jpg"
 import Image from 'next/image';
-import coffee from "../images/coffee.jpg";
+import Link from 'next/link';
 
 const QuizComponent = () => {
   const questions = [
     {
       type: "fillInTheBlanks",
-      question: "____ is known as the father of computers.",
-      options: ["Charles Babbage", "Albert Einstein", "Isaac Newton", "Alan Turing"],
-      answer: "Charles Babbage",
+      question: "A key part of financial planning is building an emergency fund, where you save ____ months' worth of living expenses.",
+      options: ["3-6", "1-2", "12-15", "6-9"],
+      correctAnswer: "3-6",
     },
     {
-      type: "imageSelection",
-      question: "You have a budget of $100. Choose items to add to your list without exceeding the budget.",
+      type: "imageOptions",
+      question: "You have a budget of $100 for essential items this month. Select items to add to your list without exceeding the budget.",
       budget: 100,
       options: [
-        { text: "Coffee Machine - $40", price: 40, image: "/images/coffee.jpg" },
-        { text: "Headphones - $60", price: 60, image: "/images/coffee.jpg" },
-        { text: "Book - $15", price: 15, image: "/images/coffee.jpg" },
-        { text: "Fitness Tracker - $55", price: 55, image: "/images/coffee.jpg" },
+        { name: "Groceries", price: 40, img:"/images/coffee.jpg" },
+        { name: "Electricity Bill", price: 30, img: "/images/taxes.jpg" },
+        { name: "Transportation", price: 20, img: "/images/coffee.jpg" },
+        { name: "Entertainment", price: 25, img: "/images/coffee.jpg" },
       ],
-      answer: 100, 
+      correctAnswer: ["Groceries", "Electricity Bill", "Transportation"], // Suggested correct items
     },
     {
-      type: "definition",
+      type: "termDefinition",
       question: "A financial instrument that derives its value from the value of an underlying asset.",
       options: ["Stock", "Bond", "Derivative", "Commodity"],
-      answer: "Derivative",
+      correctAnswer: "Derivative",
     },
   ];
 
@@ -39,28 +40,35 @@ const QuizComponent = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Handle user selection
   const handleOptionClick = (selectedOption) => {
-    if (currentQuestion.type === "fillInTheBlanks" || currentQuestion.type === "definition") {
-      if (selectedOption === currentQuestion.answer) {
+    if (currentQuestion.type === "fillInTheBlanks" || currentQuestion.type === "termDefinition") {
+      if (selectedOption === currentQuestion.correctAnswer) {
         setScore(score + 1);
       }
       nextQuestion();
-    } else if (currentQuestion.type === "imageSelection") {
-      if (currentSpend + selectedOption.price <= currentQuestion.budget) {
-        setSelectedItems([...selectedItems, selectedOption.text]);
-        setCurrentSpend(currentSpend + selectedOption.price);
-      } else {
-        alert("You cannot exceed the budget!");
-      }
-      if (currentSpend + selectedOption.price === currentQuestion.budget) {
-        setScore(score + 1);
-        nextQuestion();
+    } else if (currentQuestion.type === "imageOptions") {
+      const itemPrice = selectedOption.price;
+      if (currentSpend + itemPrice <= currentQuestion.budget) {
+        setCurrentSpend(currentSpend + itemPrice);
+        setSelectedItems([...selectedItems, selectedOption.name]);
       }
     }
   };
 
+  const checkImageOptionsAnswer = () => {
+    const isCorrect = currentQuestion.correctAnswer.every(item =>
+      selectedItems.includes(item)
+    ) && selectedItems.length === currentQuestion.correctAnswer.length;
+    if (isCorrect) {
+      setScore(score + 1);
+    }
+  };
+
   const nextQuestion = () => {
+    if (currentQuestion.type === "imageOptions") {
+      checkImageOptionsAnswer();
+    }
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedItems([]);
@@ -80,60 +88,54 @@ const QuizComponent = () => {
           <p className="text-gray-700 text-lg mb-6">
             {currentQuestion.question}
           </p>
-          {currentQuestion.type === "fillInTheBlanks" && (
-            <div className="grid gap-4">
+
+          {currentQuestion.type === "fillInTheBlanks" || currentQuestion.type === "termDefinition" ? (
+            <div className="options grid grid-cols-1 gap-3">
               {currentQuestion.options.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => handleOptionClick(option)}
-                  className="bg-gray-200 rounded-md p-2 hover:bg-blue-100 transition duration-150"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
                 >
                   {option}
                 </button>
               ))}
+             
             </div>
-          )}
-          {currentQuestion.type === "imageSelection" && (
-            <div className="grid gap-4 grid-cols-1">
-              <p className="text-gray-500 text-md mb-4">
-                Current Spend: ${currentSpend} / ${currentQuestion.budget}
-              </p>
-              {currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleOptionClick(option)}
-                  className="bg-gray-200 rounded-md p-2 flex items-center justify-center hover:bg-blue-100 transition duration-150"
-                >
-                  <Image
-                    src={coffee}
-                    alt={option.text}
-                    width={50}
-                    height={50}
-                    className=" rounded-md"
-                  />
-                  <p className="text-gray-700 mt-2">{option.text}</p>
-                </button>
-              ))}
+          ) : currentQuestion.type === "imageOptions" ? (
+            <div>
+              <p className="text-gray-500 mb-4">Current spend: ${currentSpend} / ${currentQuestion.budget}</p>
+              <div className="grid grid-cols-2 gap-3">
+                {currentQuestion.options.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleOptionClick(item)}
+                    className="bg-white rounded shadow-lg p-2 transition hover:shadow-xl border"
+                  >
+                    <Image src={item.img} alt={item.name} width={50} height={50} className="w-full h-24 object-cover rounded mb-2" />
+                    <p className="text-gray-700">{item.name}</p>
+                    <p className="text-gray-500">${item.price}</p>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={nextQuestion}
+                className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+              >
+                Next Question
+              </button>
             </div>
-          )}
-          {currentQuestion.type === "definition" && (
-            <div className="grid gap-4">
-              {currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleOptionClick(option)}
-                  className="bg-gray-200 rounded-md p-2 hover:bg-blue-100 transition duration-150"
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          )}
+          ) : null}
         </div>
       ) : (
         <div className="bg-white shadow-lg rounded-lg p-6 max-w-md w-full text-center">
           <h2 className="text-2xl font-semibold text-green-600 mb-4">Quiz Complete!</h2>
-          <p className="text-gray-700 text-lg">Your score: {score} / {questions.length}</p>
+          <p className="text-gray-700 text-lg mb-4">Your score: {score} / {questions.length}</p>
+          <Link href="/">
+            <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition inline-block">
+              Go to Next Course
+            </button>
+          </Link>
         </div>
       )}
     </div>
