@@ -5,6 +5,7 @@ import Homepage from "./components/Homepage";
 import { AuthProvider } from './components/auth/AuthContext';
 import CreditCardDisplay from "./components/CoinCoachLearning";
 import CoinCoachLearning from "./components/CoinCoachLearning";
+import Footer from "./components/Footer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,13 +29,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-      <AuthProvider>
-        <Navbar/>
-     <Homepage/>
+        <AuthProvider>
+          <Navbar />
+          <Homepage/>
+          <Footer />
 
-      </AuthProvider>
-            
-          
+        </AuthProvider>
+
+
       </body>
     </html>
   );
