@@ -6,6 +6,7 @@ import { AuthProvider } from './components/auth/AuthContext';
 import CreditCardDisplay from "./components/CoinCoachLearning";
 import CoinCoachLearning from "./components/CoinCoachLearning";
 import Footer from "./components/Footer";
+import Dashboard from "./components/Dashboard/Dashboard";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,7 +32,7 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <Navbar />
-          <Homepage/>
+        <Dashboard/>
           <Footer />
 
         </AuthProvider>
