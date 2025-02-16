@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import Lottie from 'lottie-react';
 import Savings from '../lotties/saving.json';
 import Finplan from '../lotties/finplan.json';

@@ -1,5 +1,9 @@
+// src/app/components/auth/AuthContext.js
 'use client';
-import { createContext, useContext, useState } from 'react';
+
+import { createContext, useContext, useState, useEffect } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../../firebase/Firebase';
 import AuthModal from './AuthModal';
 
 const AuthContext = createContext();
@@ -7,6 +11,17 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [initialView, setInitialView] = useState('login');
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setLoading(false);
+        });
+        
+        return () => unsubscribe();
+    }, []);
 
     const openLogin = () => {
         setInitialView('login');
@@ -22,13 +37,32 @@ export function AuthProvider({ children }) {
         setIsAuthModalOpen(false);
     };
 
+    const logout = async () => {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    };
+
+    const value = {
+        user,
+        loading,
+        openLogin,
+        openSignup,
+        closeAuth,
+        logout,
+        isAuthModalOpen,
+        initialView
+    };
+
     return (
-        <AuthContext.Provider value={{ openLogin, openSignup, closeAuth }}>
+        <AuthContext.Provider value={value}>
             {children}
             <AuthModal 
-                isOpen={isAuthModalOpen}
-                onClose={closeAuth}
-                initialView={initialView}
+                isOpen={isAuthModalOpen} 
+                onClose={closeAuth} 
+                initialView={initialView} 
             />
         </AuthContext.Provider>
     );
@@ -36,7 +70,7 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
+    if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;

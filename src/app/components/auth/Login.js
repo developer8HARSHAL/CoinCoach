@@ -1,11 +1,11 @@
-// Login.js
+// src/app/components/auth/Login.js
 'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Signup from './Signup';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { auth } from '../../firebase/Firebase';
 
 export default function Login({ isOpen, onClose, onSwitchToSignup }) {
     const router = useRouter();
@@ -40,28 +40,59 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
         setError('');
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const { user } = await signInWithEmailAndPassword(
+                auth,
+                formData.emailOrPhone,
+                formData.passcode
+            );
+
+            // Save user data to MongoDB
+            await fetch('/api/users', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                })
             });
 
-            if (response.ok) {
-                onClose();
-                router.push('/dashboard');
-            } else {
-                setError('Invalid credentials. Please try again.');
-            }
+            onClose();
+            router.push('/');
         } catch (err) {
-            setError('An error occurred. Please try again later.');
+            setError('Invalid credentials. Please try again.');
         }
     };
 
     const handleSocialLogin = async (provider) => {
         try {
-            router.push(`/api/auth/${provider}`);
+            let authProvider;
+            
+            if (provider === 'google') {
+                authProvider = new GoogleAuthProvider();
+            } else if (provider === 'facebook') {
+                authProvider = new FacebookAuthProvider();
+            } else {
+                throw new Error(`Unsupported provider: ${provider}`);
+            }
+            
+            const result = await signInWithPopup(auth, authProvider);
+            
+            // Save user data to MongoDB
+            await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid: result.user.uid,
+                    email: result.user.email,
+                    displayName: result.user.displayName,
+                    photoURL: result.user.photoURL
+                })
+            });
+            
+            onClose();
+            router.push('/');
         } catch (err) {
             setError(`${provider} login failed. Please try again.`);
         }
@@ -88,9 +119,9 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                     </button>
 
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold text-gray-900">Login</h2>
+                        <h2 className="text-3xl font-bold text-gray-900">Log In</h2>
                         <p className="mt-2 text-sm text-gray-600">
-                            Hey, Enter your details to sign in to your account
+                            Sign in to your account
                         </p>
                     </div>
 
@@ -107,7 +138,7 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                                     type="text"
                                     required
                                     className="appearance-none rounded-lg block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Enter Email / Phone No"
+                                    placeholder="Email / Phone No"
                                     value={formData.emailOrPhone}
                                     onChange={(e) => setFormData({ ...formData, emailOrPhone: e.target.value })}
                                 />
@@ -118,7 +149,7 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                                     type={showPassword ? "text" : "password"}
                                     required
                                     className="appearance-none rounded-lg block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Passcode"
+                                    placeholder="Password"
                                     value={formData.passcode}
                                     onChange={(e) => setFormData({ ...formData, passcode: e.target.value })}
                                 />
@@ -132,17 +163,11 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                             </div>
                         </div>
 
-                        <div className="text-sm text-center">
-                            <Link href="/forgot-password" className="text-gray-600 hover:text-gray-900">
-                                Having trouble signing in?
-                            </Link>
-                        </div>
-
                         <button
                             type="submit"
-                            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
                         >
-                            Sign in
+                            Log in
                         </button>
 
                         <div className="relative">
@@ -150,7 +175,7 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                                 <div className="w-full border-t border-gray-300"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-gray-500">Or Sign in with</span>
+                                <span className="px-2 bg-white text-gray-500">Or Log in with</span>
                             </div>
                         </div>
 
@@ -190,7 +215,7 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                             onClick={onSwitchToSignup}
                             className="font-medium text-blue-600 hover:text-blue-500"
                         >
-                            Request Now
+                            Sign up
                         </button>
                     </p>
                 </div>

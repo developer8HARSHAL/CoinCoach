@@ -1,9 +1,11 @@
-// Signup.js
+// src/app/components/auth/Signup.js
 'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { auth } from '../../firebase/Firebase';
 
 export default function Signup({ isOpen, onClose, onSwitchToLogin }) {
     const router = useRouter();
@@ -45,28 +47,67 @@ export default function Signup({ isOpen, onClose, onSwitchToLogin }) {
         }
 
         try {
-            const response = await fetch('/api/auth/signup', {
+            // Create user in Firebase
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.emailOrPhone,
+                formData.passcode
+            );
+            
+            const user = userCredential.user;
+            
+            // Update profile with fullName
+            await updateProfile(user, {
+                displayName: formData.fullName
+            });
+            
+            // Save to MongoDB
+            await fetch('/api/users', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                })
             });
 
-            if (response.ok) {
-                onClose();
-                router.push('/dashboard');
-            } else {
-                setError('Registration failed. Please try again.');
-            }
+            onClose();
+            router.push('/dashboard');
         } catch (err) {
-            setError('An error occurred. Please try again later.');
+            setError(err.message || 'Registration failed. Please try again.');
         }
     };
 
     const handleSocialSignup = async (provider) => {
         try {
-            router.push(`/api/auth/${provider}`);
+            let authProvider;
+            
+            if (provider === 'google') {
+                authProvider = new GoogleAuthProvider();
+            } else if (provider === 'facebook') {
+                authProvider = new FacebookAuthProvider();
+            } else {
+                throw new Error(`Unsupported provider: ${provider}`);
+            }
+            
+            const result = await signInWithPopup(auth, authProvider);
+            
+            // Save user data to MongoDB
+            await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid: result.user.uid,
+                    email: result.user.email,
+                    displayName: result.user.displayName,
+                    photoURL: result.user.photoURL
+                })
+            });
+            
+            onClose();
+            router.push('/dashboard');
         } catch (err) {
             setError(`${provider} signup failed. Please try again.`);
         }
@@ -219,4 +260,3 @@ export default function Signup({ isOpen, onClose, onSwitchToLogin }) {
         </div>
     );
 }
-
