@@ -1,0 +1,79 @@
+.home-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  padding: 0 10%;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);  /* 🎨 Gradient Background */
+  color: white;
+}
+
+
+.bubble {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  opacity: 0.7;
+  filter: blur(3px);
+  bottom: -50px;
+  left: calc(10% + 80% * var(--x));
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: bold;
+  color: white;
+}
+
+.subtitle {
+  margin-top: 20px;
+  font-size: 2rem;
+  color: #fff;
+  margin-bottom: 40px;
+}
+
+.start-btn {
+  margin-top: 20px;
+  font-size: 1.5rem;  
+  padding: 12px 30px;
+  background-color: #ffcc00;  
+  color: #2d2d2d !important;  
+  border-radius: 12px;
+  border: 2px;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.3);
+}
+
+.start-btn:hover {
+  background-color: #ffd633; 
+  transform: scale(1.1);  
+  box-shadow: 0px 6px 15px rgba(255, 255, 255, 0.5);
+}
+
+.start-btn:active {
+  transform: scale(0.95);  
+}
+
+.animation-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lottie-animation {
+  margin-top: 30px;
+  width: 90%; 
+  height: auto;
+}
+
+.content-container {
+  flex: 1;
+  text-align: center;
+}
