@@ -13,7 +13,7 @@ export default function SavingsPage() {
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-12 md:py-24">
+      <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="w-full md:w-1/2">
             <Image
@@ -21,12 +21,12 @@ export default function SavingsPage() {
               alt="Savings Hero Image"
               width={600}
               height={400}
-              className="rounded-lg shadow-lg"
+              className="rounded-lg shadow-lg ml-[80px]"
             />
           </div>
           <div className="w-full md:w-1/2 space-y-4">
-            <h1 className="text-4xl font-bold text-gray-800">Master Your Savings</h1>
-            <p className="text-lg text-gray-600">
+            <h1 className="text-4xl font-bold ">Master Your Savings</h1>
+            <p className="text-lg ">
               Learn effective strategies to grow your wealth and secure your financial future.
               Our comprehensive courses will guide you through smart saving techniques and investment principles.
             </p>
@@ -51,21 +51,94 @@ export default function SavingsPage() {
                 />
                 <div className="p-6">
                   <h3 className="font-bold text-xl mb-2">{course.title}</h3>
-                  <p className="text-gray-600">{course.description}</p>
-                  <Link 
-                    href="#"
-                    className="inline-flex items-center mt-4 text-blue-600 hover:text-blue-800 font-semibold"
-                  >
-                    Learn More
-                    
-                  </Link>
+                  
                 </div>
               </div>
             ))}
           </div>
         </div>
       </section>
-      <QuizComponent/>
+      <div className="grid lg:grid-cols-2  px-[30px]">
+          <div className=" mt-[80px] w-[550px] ml-[80px]">
+            <div className="card shadow-2xl rounded-lg p-6 ml-[50px] bg-white transform transition-all hover:scale-105 hover:shadow-xl border border-gray-300 flex justify-center">
+              <Image src={budget} alt="Investment" height={500} width={500} />
+            </div>
+          </div>
+          <div className="lg:mt-[80px] pt-[80px] text-5xl text-center inter font-bold text-gray-800">
+            Bugetting Basics
+            <div className="mt-[10px] text-xl font-semibold">
+              For Fun And Engagement
+            </div>
+            <div className="text-xl font-thin mt-[10px] px-6 text-gray-600">
+              Learning about finances doesn’t have to be boring! CoinCoach turns complex topics into interactive games, quizzes, and challenges, so you can stay motivated and retain what you learn.
+            </div>
+          </div>
+        </div>
+
+        {/* card2 */}
+        <div className="grid lg:grid-cols-2 gap-12 px-[30px] mt-[80px]">
+          <div className="lg:mt-[80px] ml-[100px] pt-[80px] text-5xl text-center inter font-bold text-gray-800">
+            Emergency Fund Strategies
+            <div className="mt-[10px] text-xl font-semibold">
+              for Real Results
+            </div>
+            <div className="text-xl font-thin mt-[10px] px-6 text-gray-600">
+              Learning about finances doesn’t have to be boring! CoinCoach turns complex topics into interactive games, quizzes, and challenges, so you can stay motivated and retain what you learn.
+            </div>
+          </div>
+          <div className="lg:w-[500px] lg:h-[500px] mt-[100px] ml-[150px]">
+            <div className="card shadow-2xl rounded-lg p-6 bg-white transform transition-all hover:scale-105 hover:shadow-xl border border-gray-300">
+            <Image src={Investment} alt="Investment" height={500} width={500} />
+
+            </div>
+          </div>
+        </div>
+
+        {/* card3 */}
+        <div className="grid lg:grid-cols-2  px-[30px]">
+          <div className=" mt-[80px] w-[550px] ml-[80px]">
+            <div className="card shadow-2xl rounded-lg p-6 ml-[50px] bg-white transform transition-all hover:scale-105 hover:shadow-xl border border-gray-300 flex justify-center">
+              <Image src={Investment} alt="Investment" height={500} width={500} />
+            </div>
+          </div>
+          <div className="lg:mt-[80px] pt-[80px] text-5xl text-center inter font-bold text-gray-800">
+            Investment Fundamentals
+            <div className="mt-[10px] text-xl font-semibold">
+              For Fun And Engagement
+            </div>
+            <div className="text-xl font-thin mt-[10px] px-6 text-gray-600">
+              Learning about finances doesn’t have to be boring! CoinCoach turns complex topics into interactive games, quizzes, and challenges, so you can stay motivated and retain what you learn.
+            </div>
+          </div>
+        </div>
+        {/* card4 */}
+        <div className="grid lg:grid-cols-2 gap-12 px-[30px] mt-[80px]">
+          <div className="lg:mt-[80px] pt-[80px] ml-[100px] text-5xl text-center inter font-bold text-gray-800">
+            Debt Management
+            <div className="mt-[10px] text-xl font-semibold">
+              for Real Results
+            </div>
+            <div className="text-xl font-thin mt-[10px] px-6 text-gray-600">
+              Learning about finances doesn’t have to be boring! CoinCoach turns complex topics into interactive games, quizzes, and challenges, so you can stay motivated and retain what you learn.
+            </div>
+          </div>
+          <div className="lg:w-[500px] lg:h-[500px] mt-[100px] ml-[150px]">
+            <div className="card shadow-2xl rounded-lg p-6 bg-white transform transition-all hover:scale-105 hover:shadow-xl border border-gray-300">
+            <Image src={depts} alt="Investment" height={500} width={500} />
+
+            </div>
+          </div>
+        </div>
+
+        {/* Button */}
+        <div className="flex justify-center mt-8 mb-8">
+          <button className="px-10 py-4 bg-gradient-to-r from-teal-400 via-cyan-500 to-indigo-400 text-white font-bold rounded-3xl text-2xl shadow-lg hover:scale-105 transform transition-all duration-300">
+            <Link href="/quiz">
+            Take Quiz
+            </Link>
+          </button>
+        </div>
+      
     </main>
   )
 }
@@ -93,3 +166,4 @@ const courses = [
   },
   
 ]
+
