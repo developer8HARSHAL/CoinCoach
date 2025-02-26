@@ -5,9 +5,9 @@ import InvestmentBasics from "./inverstment/investment-basics";
 export default function Home() {
   return (
     <div>
-      {/* <Homepage/> */}
+      <Homepage/>
       {/* <CoinCoachLearning/> */}
-      <InvestmentBasics/>
+      {/* <InvestmentBasics/> */}
     </div>
   );
 }
