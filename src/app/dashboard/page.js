@@ -1,9 +1,13 @@
-// src/app/dashboard/page.js
 'use client';
 
 import React from 'react';
-import Dashboard from '../components/Dashboard/Dashboard';
+import Dashboard from './dashboard';
+import { UserDataProvider } from './UserDataProvider';
 
 export default function DashboardPage() {
-  return <Dashboard />;
+  return (
+    <UserDataProvider> 
+      <Dashboard />
+    </UserDataProvider>
+  );
 }
