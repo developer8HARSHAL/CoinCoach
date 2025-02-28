@@ -9,7 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-<<<<<<< HEAD
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@jaredreisinger/react-crossword": "^5.2.0",
+    "@mui/material": "^6.4.2",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-progress": "^1.1.2",
     "@radix-ui/react-select": "^2.1.6",
@@ -20,30 +23,20 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
     "firebase": "^11.3.1",
-    "lottie-react": "^2.4.1",
-    "lucide-react": "^0.475.0",
-    "next": "15.0.1",
-=======
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/material": "^6.4.2",
     "framer-motion": "^12.0.6",
     "lottie-react": "^2.4.0",
+    "lucide-react": "^0.475.0",
     "next": "^15.1.6",
->>>>>>> 1cfa6df5952231d34f33b91d68df0636a6ccfd79
     "react": "19.0.0-rc-69d4b800-20241021",
     "react-beautiful-dnd": "^13.1.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "19.0.0-rc-69d4b800-20241021",
     "react-icons": "^5.3.0",
-<<<<<<< HEAD
+    "react-router-dom": "^7.1.4",
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7"
-=======
-    "react-router-dom": "^7.1.4"
->>>>>>> 1cfa6df5952231d34f33b91d68df0636a6ccfd79
   },
   "devDependencies": {
     "postcss": "^8",
