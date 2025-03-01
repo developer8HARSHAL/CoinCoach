@@ -7,7 +7,7 @@ import Image from "next/image";
 import logo from "../../../public/images/logo.png";
 import { FaBell } from "react-icons/fa6";
 import { useAuth } from '../components/auth/AuthContext';
-import Dashboard from "./Dashboard/Dashboard";
+import Dashboard from "../components/dashboard/dashboard";
 
 export default function Navbar() {
     const { user, openLogin, openSignup, logout } = useAuth();
