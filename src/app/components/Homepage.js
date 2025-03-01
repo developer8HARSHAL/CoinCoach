@@ -12,6 +12,7 @@ import money from "../lotties/Money.json";
 import Navbar from './Navbar';
 import HomeImg from "../lotties/home_img.json"
 import Footer from './Footer';
+import CoinCoachLearning from './CoinCoachLearning';
 
 
 
@@ -69,12 +70,13 @@ export default function Homepage(){
 
             <div id="crs" className='lg:my-[150px] my-[100px]'>
                 <div className='text-center inter lg:text-6xl text-4xl'><b>Explore Our Courses!</b></div>
-                <div className='grid grid-cols-1 lg:grid-cols-4 lg:mt-[60px] mt-[20px] py-10 px-[10px]'>
+                {/* <div className='grid grid-cols-1 lg:grid-cols-4 lg:mt-[60px] mt-[20px] py-10 px-[10px]'>
                     <Course name="Future Funds" img={piggy} desc="Discover strategies to build a safety net and grow your wealth through savvy saving habits" addr="/savings"/>
                     <Course name="Tax Tactics" img={taxes} desc="Learn effective ways to manage your taxes and maximize returns with ease and confidence" addr="/savings" />
                     <Course name="Invest IQ" img={invest} desc="Boost your investment knowledge and learn how to make your money work harder for you." addr="/savings"/>
                     <Course name="Borrow Smart" img={loans} desc="Navigate the world of loans and credit with clarity, ensuring you borrow only when it’s wise." addr="/savings" />
-                </div>
+                </div> */}
+                <CoinCoachLearning/>
             </div>
 
         {/* <div className='bg-gradient-to-r from-[rgba(169,61,225,1)]  to-[rgba(255,113,77,1)] mx-[50px] lg:h-[500px] lg:rounded-full rounded-lg inter lg:mt-[-20px]'>

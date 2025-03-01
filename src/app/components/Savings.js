@@ -6,6 +6,7 @@ import Investment from '../../../public/Investment.jpg'
 import depts from '../../../public/depts.jpg'
 import saving from '../../../public/saving.png'
 import QuizComponent from './Quiz'
+import LearningModule from './LearningModule'
 
 
 
@@ -13,7 +14,7 @@ export default function SavingsPage() {
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Hero Section */}
-      <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
+      {/* <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="w-full md:w-1/2">
             <Image
@@ -35,7 +36,6 @@ export default function SavingsPage() {
         </div>
       </section>
 
-      {/* Courses Section */}
       <section id="courses" className="bg-white py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Topics Covered</h2>
@@ -75,7 +75,7 @@ export default function SavingsPage() {
           </div>
         </div>
 
-        {/* card2 */}
+
         <div className="grid lg:grid-cols-2 gap-12 px-[30px] mt-[80px]">
           <div className="lg:mt-[80px] ml-[100px] pt-[80px] text-5xl text-center inter font-bold text-gray-800">
             Emergency Fund Strategies
@@ -94,7 +94,6 @@ export default function SavingsPage() {
           </div>
         </div>
 
-        {/* card3 */}
         <div className="grid lg:grid-cols-2  px-[30px]">
           <div className=" mt-[80px] w-[550px] ml-[80px]">
             <div className="card shadow-2xl rounded-lg p-6 ml-[50px] bg-white transform transition-all hover:scale-105 hover:shadow-xl border border-gray-300 flex justify-center">
@@ -111,7 +110,7 @@ export default function SavingsPage() {
             </div>
           </div>
         </div>
-        {/* card4 */}
+        
         <div className="grid lg:grid-cols-2 gap-12 px-[30px] mt-[80px]">
           <div className="lg:mt-[80px] pt-[80px] ml-[100px] text-5xl text-center inter font-bold text-gray-800">
             Debt Management
@@ -130,15 +129,15 @@ export default function SavingsPage() {
           </div>
         </div>
 
-        {/* Button */}
+  
         <div className="flex justify-center mt-8 mb-8">
           <button className="px-10 py-4 bg-gradient-to-r from-teal-400 via-cyan-500 to-indigo-400 text-white font-bold rounded-3xl text-2xl shadow-lg hover:scale-105 transform transition-all duration-300">
             <Link href="/quiz">
             Take Quiz
             </Link>
           </button>
-        </div>
-      
+        </div> */}
+      <LearningModule/>
     </main>
   )
 }

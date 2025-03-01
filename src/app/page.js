@@ -7,8 +7,8 @@ import CreditDebitCrossword from "./components/CreditDebitCrossword";
 export default function Home() {
   return (
     <div>
-      <CreditDebitCrossword/>
-      {/* <Homepage/> */}
+      {/* <CreditDebitCrossword/> */}
+      <Homepage/>
       {/* <CoinCoachLearning/> */}
       {/* <InvestmentBasics/> */}
     </div>
