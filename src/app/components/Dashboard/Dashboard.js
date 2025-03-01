@@ -1,337 +1,404 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, TrendingUp, Trophy, Target, Wallet, CreditCard, PiggyBank, IndianRupee, DollarSign, Plus, Minus, ArrowRight, Calendar, Clock, ArrowUp, ArrowDown } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import AnalyticsContent from './AnalyticsContent';
+import React, { useState } from 'react';
+import { Calendar, User, BarChart2, PieChart, Award, Gamepad2, BookOpen, Target, Activity, ArrowRight,ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import UserProfile from './UserProfile';
+import ModuleCard from './ModuleCard';
+import { useUserData } from './UserDataProvider';
 
 const Dashboard = () => {
-  // Main financial state
-  const [income, setIncome] = useState(50000);
-  const [expenses, setExpenses] = useState(30000);
-  const [savings, setSavings] = useState(20000);
-  const [points, setPoints] = useState(150);
-  const [savingsGoal, setSavingsGoal] = useState(30000);
-  
-  // Historical data
-  const [monthlyData, setMonthlyData] = useState([
-    { name: 'Jan', income: 50000, expenses: 15000, savings: 15000 },
-    { name: 'Feb', income: 52000, expenses: 28000, savings: 24000 },
-    { name: 'Mar', income: 48000, expenses: 32000, savings: 16000 },
-    { name: 'Apr', income: 55000, expenses: 31000, savings: 24000 },
-    { name: 'May', income: 53000, expenses: 29000, savings: 24000 },
-    { name: 'Jun', income: 56000, expenses: 33000, savings: 23000 },
-  ]);
+  const { userData } = useUserData() || {};
+  const [selectedDate, setSelectedDate] = useState(userData?.activityLog?.[0]?.date || "");
+  const [activeTab, setActiveTab] = useState("progress");
 
-  const [expenseCategories, setExpenseCategories] = useState([
-    { category: 'Housing', amount: 12000 },
-    { category: 'Food', amount: 5000 },
-    { category: 'Transport', amount: 3000 },
-    { category: 'Utilities', amount: 2000 },
-    { category: 'Entertainment', amount: 1500 },
-    { category: 'Others', amount: 6500 },
-  ]);
-
-  // Analytics data
-  const [incomeGrowth, setIncomeGrowth] = useState(4);
-  const [expenseGrowth, setExpenseGrowth] = useState(-2);
-  const [netWorthGrowth, setNetWorthGrowth] = useState(12);
-  
-  // Transactions data
-  const [recentTransactions, setRecentTransactions] = useState([
-    { id: 1, description: 'Salary Deposit', amount: 50000, type: 'income', date: '2025-02-01' },
-    { id: 2, description: 'Rent Payment', amount: -12000, type: 'expense', date: '2025-02-03' },
-    { id: 3, description: 'Grocery Shopping', amount: -2500, type: 'expense', date: '2025-02-05' },
-    { id: 4, description: 'Investment Returns', amount: 3500, type: 'income', date: '2025-02-10' },
-    { id: 5, description: 'Utility Bills', amount: -1800, type: 'expense', date: '2025-02-12' },
-  ]);
-
-  // Upcoming bills
-  const [upcomingBills, setUpcomingBills] = useState([
-    { id: 1, description: 'Electricity Bill', amount: 1200, dueDate: '2025-02-20' },
-    { id: 2, description: 'Internet Bill', amount: 800, dueDate: '2025-02-22' },
-    { id: 3, description: 'Credit Card Payment', amount: 5000, dueDate: '2025-02-25' },
-    { id: 4, description: 'Insurance Premium', amount: 2500, dueDate: '2025-03-01' },
-  ]);
-
-  // Calculate total income, expenses and savings from transactions
-  useEffect(() => {
-    const currentMonth = new Date().getMonth();
-    const thisMonthTransactions = recentTransactions.filter(t => {
-      const transactionMonth = new Date(t.date).getMonth();
-      return transactionMonth === currentMonth;
-    });
-    
-    const totalIncome = thisMonthTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    const totalExpenses = thisMonthTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
-    setIncome(totalIncome);
-    setExpenses(totalExpenses);
-    setSavings(totalIncome - totalExpenses);
-  }, [recentTransactions]);
-
-  // Functions for calculations
-  const calculateSavingsProgress = () => {
-    return (savings / savingsGoal) * 100;
+  const getActivitiesForDate = (date) => {
+    const dayLog = userData.activityLog.find(log => log.date === date);
+    return dayLog?.activities || ["No activities recorded for this date"];
   };
 
-  // Get financial advice based on current status
-  const getFinancialAdvice = () => {
-    const savingsRate = (savings / income) * 100;
-    
-    if (savingsRate < 10) {
-      return "Try to save at least 10% of your income each month.";
-    } else if (savingsRate < 20) {
-      return "Good job! Consider increasing your savings to 20% of income.";
-    } else {
-      return "Excellent saving habits! Your financial future looks bright.";
-    }
-  };
+  // Calculate overall progress
+  const totalLessons = userData.modules.reduce((sum, module) => sum + module.totalLessons, 0);
+  const completedLessons = userData.modules.reduce((sum, module) => sum + module.completedLessons, 0);
+  const overallProgress = Math.round((completedLessons / totalLessons) * 100);
+
+  const gamesProgress = Math.round((userData.games.completed / userData.games.total) * 100);
+
+  const timeSpentData = userData.analytics.timeSpent.map(item => ({
+    name: item.week,
+    hours: item.hours
+  }));
+
+  const currentHour = new Date().getHours();
+  let greeting = "Good morning";
+  if (currentHour >= 12 && currentHour < 17) {
+    greeting = "Good afternoon";
+  } else if (currentHour >= 17) {
+    greeting = "Good evening";
+  }
+
+  const recommendedModule = userData.modules.sort((a, b) =>
+    (b.lastAccessed > a.lastAccessed) ? 1 :
+      ((a.lastAccessed > b.lastAccessed) ? -1 : 0)
+  )[0];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Financial Dashboard</h1>
-          <div className="flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-500" />
-            <span className="text-xl font-semibold">{points} Points</span>
+    <div className="p-6 bg-gradient-to-b from-gray-50 to-blue-50 min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <Card className="border-none shadow-lg bg-gradient-to-r from-yellow-500 to-blue-800 text-black">
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <h1 className="text-3xl font-bold mb-2">{greeting}, {userData.name}!</h1>
+                <p className="text-white mb-6">{userData.message}</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+                  <Card className="bg-white/10 border-none shadow-none">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-medium mb-2">Learning Progress</h3>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm text-white">Overall Completion</span>
+                        <span className="text-sm font-bold">{overallProgress}%</span>
+                      </div>
+                      <Progress value={overallProgress} className="h-2 bg-white/30" />
+                      <div className="flex justify-between mt-3 text-sm">
+                        <span>{completedLessons} of {totalLessons} lessons complete</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/10 border-none shadow-none">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-medium mb-2">Learning Streak</h3>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="text-3xl font-bold">{userData.streaks.currentWeekly}</div>
+                        <div className="text-sm">
+                          <div>day streak</div>
+                          <div className="text-white">Best: {userData.streaks.longestWeekly} days</div>
+                        </div>
+                      </div>
+                      <div className="flex space-x-1 mt-2">
+                        {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                          <div
+                            key={day}
+                            className={`h-2 flex-1 rounded-sm ${day <= userData.streaks.currentWeekly ? 'bg-green-400' : 'bg-white/20'}`}
+                          ></div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between bg-white/10 rounded-xl p-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Continue Learning</h3>
+                  <h4 className="text-xl font-bold mb-3">{recommendedModule.title}</h4>
+                  <p className="text-sm text-blue-100 mb-4 line-clamp-3">{recommendedModule.description}</p>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Progress</span>
+                    <span>{recommendedModule.progress}%</span>
+                  </div>
+                  <Progress value={recommendedModule.progress} className="h-2 bg-white/30" />
+                </div>
+                <Button className="mt-6 bg-white text-black hover:bg-blue-100 w-full">
+                  Continue Learning
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div>
+            <UserProfile userData={userData} />
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            <Tabs defaultValue="learning" className="w-full">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Performance Dashboard</CardTitle>
+                    <TabsList>
+                      <TabsTrigger value="learning">Learning</TabsTrigger>
+                      <TabsTrigger value="games">Games</TabsTrigger>
+                      <TabsTrigger value="quiz">Quiz Scores</TabsTrigger>
+                    </TabsList>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <TabsContent value="learning" className="mt-0">
+                    <h3 className="text-sm font-medium text-gray-700 mb-4">Time Spent Learning (Last 5 Weeks)</h3>
+                    <div className="h-52">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={timeSpentData}
+                          margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis dataKey="name" />
+                          <YAxis unit="h" />
+                          <Tooltip formatter={(value) => [`${value} hours`, 'Time Spent']} />
+                          <Bar
+                            dataKey="hours"
+                            fill="#4F46E5"
+                            radius={[4, 4, 0, 0]}
+                            barSize={40}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <h3 className="text-sm font-medium text-gray-700 mt-8 mb-4">Module Engagement</h3>
+                    <div className="space-y-4">
+                      {userData.analytics.moduleEngagement.map((item, index) => (
+                        <div key={index}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>{item.module}</span>
+                            <span className="font-medium">{item.percentage}%</span>
+                          </div>
+                          <Progress value={item.percentage} className="h-2" />
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="games" className="mt-0">
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm text-gray-600">Games Completed</span>
+                          <span className="text-sm font-medium text-gray-800">{userData.games.completed}/{userData.games.total}</span>
+                        </div>
+                        <Progress value={gamesProgress} className="h-2" />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card className="bg-orange-50 border-none">
+                          <CardContent className="p-4">
+                            <h3 className="text-sm text-gray-600">Highest Score</h3>
+                            <div className="text-2xl font-bold text-orange-600">{userData.games.highestScore}</div>
+                            <div className="text-xs text-gray-500 mt-1">{userData.games.favoriteGame}</div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="bg-green-50 border-none">
+                          <CardContent className="p-4">
+                            <h3 className="text-sm text-gray-600">Favorite Game</h3>
+                            <div className="text-lg font-medium text-green-600 line-clamp-1">{userData.games.favoriteGame}</div>
+                            <div className="text-xs text-gray-500 mt-1">Last played: {new Date(userData.games.lastPlayed).toLocaleDateString()}</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Recent Achievements</h3>
+                        <div className="space-y-3">
+                          <div className="flex items-center p-3 bg-yellow-50 rounded-lg">
+                            <div className="bg-yellow-100 p-2 rounded-full">
+                              <Award className="h-4 w-4 text-yellow-600" />
+                            </div>
+                            <div className="ml-3">
+                              <span className="text-sm font-medium block">Budget Master</span>
+                              <span className="text-xs text-gray-500">Completed all budget games</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+                            <div className="bg-blue-100 p-2 rounded-full">
+                              <Award className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="ml-3">
+                              <span className="text-sm font-medium block">Stock Trader</span>
+                              <span className="text-xs text-gray-500">Reached 10% profit in simulator</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button className="w-full bg-green-600 hover:bg-green-700">
+                        Play Financial Games
+                      </Button>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="quiz" className="mt-0">
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <Card className="bg-blue-50 border-none">
+                          <CardContent className="p-4">
+                            <h3 className="text-sm text-gray-600">Average Score</h3>
+                            <div className="text-2xl font-bold text-blue-600">
+                              {Math.round(userData.analytics.quizScores.reduce((sum, quiz) => sum + quiz.score, 0) / userData.analytics.quizScores.length)}%
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">Across {userData.analytics.quizScores.length} quizzes</div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="bg-green-50 border-none">
+                          <CardContent className="p-4">
+                            <h3 className="text-sm text-gray-600">Highest Score</h3>
+                            <div className="text-2xl font-bold text-green-600">
+                              {Math.max(...userData.analytics.quizScores.map(quiz => quiz.score))}%
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {userData.analytics.quizScores.sort((a, b) => b.score - a.score)[0].quiz}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Quiz Performance</h3>
+                        <div className="space-y-4">
+                          {userData.analytics.quizScores.map((item, index) => (
+                            <div key={index}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>{item.quiz}</span>
+                                <span className="font-medium">{item.score}%</span>
+                              </div>
+                              <Progress
+                                value={item.score}
+                                className={`h-2 ${item.score >= 90 ? 'bg-green-100' :
+                                  item.score >= 80 ? 'bg-blue-100' :
+                                    item.score >= 70 ? 'bg-yellow-100' :
+                                      'bg-red-100'
+                                  }`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Button className="w-full">
+                        Take Practice Quiz
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </CardContent>
+              </Card>
+            </Tabs>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle>Recent Activity</CardTitle>
+                  <Activity className="h-5 w-5 text-gray-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <select
+                  className="w-full p-2 border border-gray-300 rounded-md mb-4 text-gray-700 text-sm"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                >
+                  {userData.activityLog.map((log) => (
+                    <option key={log.date} value={log.date}>
+                      {new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </option>
+                  ))}
+                </select>
+                <ul className="text-sm text-gray-600 space-y-3">
+                  {getActivitiesForDate(selectedDate).map((activity, index) => (
+                    <li key={index} className="flex items-start pb-3 border-b border-gray-100 last:border-0">
+                      <span className="inline-block h-2 w-2 rounded-full bg-blue-500 mt-1.5 mr-2"></span>
+                      {activity}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-          </TabsList>
+       <div className='bg-white p-10 rounded-lg border border-gray-300 shadow-xl'>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Learning Modules</h2>
+        <div className="flex gap-2">
+          <Button
+            className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+            variant="outline"
+            onClick={() => {
+              const container = document.getElementById('modules-container');
+              if (container) {
+                container.scrollBy({ left: -container.clientWidth, behavior: 'smooth' });
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+            variant="outline"
+            onClick={() => {
+              const container = document.getElementById('modules-container');
+              if (container) {
+                container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
+              }
+            }}
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        
+        </div>
+      </div>
 
-          {/* OVERVIEW TAB */}
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-                  <IndianRupee className="h-4 w-4 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {income.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
-                  </div>
-                  <div className="flex items-center text-xs text-gray-500 mt-1">
-                    {incomeGrowth >= 0 ? <ArrowUp className="h-3 w-3 text-green-500 mr-1" /> : <ArrowDown className="h-3 w-3 text-red-500 mr-1" />}
-                    <span>{Math.abs(incomeGrowth)}% from last month</span>
-                  </div>
-                </CardContent>
-              </Card>
+      <div
+        id="modules-container"
+        className="flex overflow-x-auto pb-4 gap-6 snap-x snap-mandatory scroll-smooth"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E0 #F7FAFC' }}
+      >
+        {userData.modules.map((module, index) => (
+          <div
+            key={module.id}
+            className="min-w-[320px] w-[320px] flex-shrink-0 transition-transform duration-300 hover:scale-105 snap-start"
+          >
+            <ModuleCard
+              module={module}
+              position={index + 1}
+              totalModules={userData.modules.length}
+            />
+          </div>
+        ))}
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Expenses</CardTitle>
-                  <CreditCard className="h-4 w-4 text-red-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {expenses.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
-                  </div>
-                  <div className="flex items-center text-xs text-gray-500 mt-1">
-                    {expenseGrowth >= 0 ? <ArrowUp className="h-3 w-3 text-red-500 mr-1" /> : <ArrowDown className="h-3 w-3 text-green-500 mr-1" />}
-                    <span>{Math.abs(expenseGrowth)}% from last month</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Savings</CardTitle>
-                  <PiggyBank className="h-4 w-4 text-blue-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {savings.toLocaleString("en-IN", { style: "currency", currency: "INR" })}
-                  </div>
-                  <Progress value={calculateSavingsProgress()} className="mt-2" />
-                  <p className="text-xs text-gray-500 mt-1">{calculateSavingsProgress().toFixed(0)}% of monthly goal</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-                  <Wallet className="h-4 w-4 text-purple-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {(income - expenses).toLocaleString("en-IN", { style: "currency", currency: "INR" })}
-                  </div>
-                  <div className="flex items-center text-xs text-gray-500 mt-1">
-                    {netWorthGrowth >= 0 ? <ArrowUp className="h-3 w-3 text-green-500 mr-1" /> : <ArrowDown className="h-3 w-3 text-red-500 mr-1" />}
-                    <span>{Math.abs(netWorthGrowth)}% from last year</span>
-                  </div>
-                </CardContent>
-              </Card>
+        {userData.modules.length === 0 && (
+          <div className="min-w-full flex items-center justify-center p-10 border-2 border-dashed border-gray-300 rounded-lg">
+            <div className="text-center">
+              <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-lg font-medium text-gray-900">No modules yet</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by creating your first learning module.</p>
+              <div className="mt-6">
+                <Button className="bg-black text-white hover:bg-gray-800">
+                  Create Module
+                </Button>
+              </div>
             </div>
+          </div>
+        )}
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Overview</CardTitle>
-                  <CardDescription>Your financial activity over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={monthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="income" stroke="#22c55e" />
-                      <Line type="monotone" dataKey="expenses" stroke="#ef4444" />
-                      <Line type="monotone" dataKey="savings" stroke="#3b82f6" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Expense Breakdown</CardTitle>
-                  <CardDescription>Where your money goes</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={expenseCategories}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="amount" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <CardTitle>Recent Transactions</CardTitle>
-                  <CardDescription>Your latest financial activities</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentTransactions.slice(0, 5).map((transaction) => (
-                      <div key={transaction.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                          }`}>
-                            {transaction.type === 'income' ? 
-                              <Plus className="h-5 w-5 text-green-600" /> : 
-                              <Minus className="h-5 w-5 text-red-600" />
-                            }
-                          </div>
-                          <div>
-                            <p className="font-medium">{transaction.description}</p>
-                            <p className="text-sm text-gray-500">{transaction.date}</p>
-                          </div>
-                        </div>
-                        <span className={`font-medium ${
-                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {transaction.amount.toLocaleString("en-IN", { 
-                            style: "currency", 
-                            currency: "INR",
-                            signDisplay: 'never'
-                          })}
-                          {transaction.type === 'income' ? ' +' : ' -'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <Button variant="outline" className="w-full">View All Transactions</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Bills</CardTitle>
-                  <CardDescription>Don't miss these payments</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {upcomingBills.slice(0, 3).map((bill) => (
-                      <div key={bill.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{bill.description}</p>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            <span>Due: {bill.dueDate}</span>
-                          </div>
-                        </div>
-                        <span className="font-medium">
-                          {bill.amount.toLocaleString("en-IN", { 
-                            style: "currency", 
-                            currency: "INR" 
-                          })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <Button variant="outline" className="w-full">View All Bills</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center">
-                <div>
-                  <CardTitle>Financial Advice</CardTitle>
-                  <CardDescription>Tips to improve your finances</CardDescription>
-                </div>
-                <AlertCircle className="ml-auto h-5 w-5 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <p>{getFinancialAdvice()}</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* ANALYTICS & BUDGET TABS */}
-          <AnalyticsContent 
-            monthlyData={monthlyData}
-            expenseCategories={expenseCategories}
-            setExpenseCategories={setExpenseCategories}
-            income={income}
-            expenses={expenses}
-            savings={savings}
-            savingsGoal={savingsGoal}
-            setSavingsGoal={setSavingsGoal}
-            points={points}
-            setPoints={setPoints}
-            expenseDistribution={expenseCategories.map(({ category, amount }) => ({
-              name: category,
-              value: amount
-            }))}
-            recentTransactions={recentTransactions}
-            setRecentTransactions={setRecentTransactions}
+      <div className="flex items-center justify-center mt-4 gap-1">
+        {userData.modules.length > 0 && Array.from({ length: Math.ceil(userData.modules.length / 3) }).map((_, i) => (
+          <button
+            key={i}
+            className="h-2 w-2 rounded-full bg-gray-300 hover:bg-gray-500 focus:outline-none transition-colors"
+            onClick={() => {
+              const container = document.getElementById('modules-container');
+              if (container) {
+                container.scrollTo({ left: i * container.clientWidth, behavior: 'smooth' });
+              }
+            }}
           />
-          
-        </Tabs>
+        ))}
+      </div>
+    </div>
+
       </div>
     </div>
   );
