@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight } from 'lucide-react';
-import Savings from '../lotties/saving.json';
+import Savings from '../../lotties/saving.json';
 
 
 const ModuleCard = ({ module }) => {
