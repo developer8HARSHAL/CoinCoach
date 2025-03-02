@@ -1,4 +1,5 @@
 // pages/investment-basics.jsx
+"use client"
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -10,27 +11,25 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-export default function InvestmentBasics() {
+export default function InvestmentBasics(props) {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen ">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className='text-2xl'>{props.chapter}</div>
         {/* Section 1: Understanding Investment */}
-        <div className="grid md:grid-cols-2 gap-16 mb-20">
-          <div>
-            <p className="text-green-500 font-medium mb-2">Understanding Investment</p>
+        <div className="grid md:grid-cols-2 gap-28 mb-20">
+          <div className='mt-10'>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              What is investing?
+              What is Investment?
             </h2>
             <p className="text-gray-600 mb-6">
-              Investing involves allocating resources, usually money, with the expectation 
-              of generating income or profit over time. Unlike saving, investing puts your 
-              money to work in different vehicles that have the potential to generate returns.
+            {props.theory1}
             </p>
            
           </div>
 
           <div className="relative">
-            <div className="bg-green-500 rounded-full w-64 h-64 flex items-center justify-center mx-auto relative">
+            <div className="bg-purple-500 rounded-full w-64 h-64 flex items-center justify-center mx-auto relative">
               <DollarSign className="h-32 w-32 text-white" />
               <div className="absolute -bottom-4 -right-4">
                 <div className="flex space-x-1">
@@ -59,7 +58,7 @@ export default function InvestmentBasics() {
             Risk vs reward
           </h2>
           
-          <div className="grid md:grid-cols-2 gap-8 mt-12">
+          <div className="grid md:grid-cols-2 gap-28 mt-12">
             <div className="relative">
               <div className="bg-green-100 w-full h-64 rounded-lg flex items-center justify-center">
                 <div className="grid grid-cols-2 gap-6">
@@ -92,7 +91,7 @@ export default function InvestmentBasics() {
         </div>
 
         {/* Section 3: Types of Investments */}
-        <div className="grid md:grid-cols-2 gap-16 mb-20">
+        <div className="grid md:grid-cols-2 gap-28 mb-20">
           <div>
             <p className="text-green-500 font-medium mb-2">Types of Investments</p>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -139,7 +138,7 @@ export default function InvestmentBasics() {
         </div>
 
         {/* Section 4: Real Estate Investment */}
-        <div className="grid md:grid-cols-2 gap-16 mb-20">
+        <div className="grid md:grid-cols-2 gap-28 mb-20">
           <div className="relative">
             <div className="bg-green-500 rounded-full w-64 h-64 flex items-center justify-center mx-auto relative">
               <Building className="h-32 w-32 text-white" />
