@@ -29,7 +29,7 @@ export default function CompoundingTheory() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
             >
-                Imagine planting a tiny seed and watching it grow into a huge tree over time. That’s exactly how compounding works with your savings and investments!
+             Imagine planting a tiny seed and watching it grow into a huge tree over time. That’s exactly how compounding works with your savings and investments!
             </motion.p>
             <motion.div 
                 initial={{ opacity: 0, y: 10 }} 

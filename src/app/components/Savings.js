@@ -137,7 +137,8 @@ export default function SavingsPage() {
             </Link>
           </button>
         </div> */}
-      <LearningModule/>
+      {/* <LearningModule/> */}
+      <CreditDebt/>
     </main>
   )
 }
