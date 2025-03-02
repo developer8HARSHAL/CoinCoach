@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Dashboard from './dashboard';
-import { UserDataProvider } from './UserDataProvider';
+import Dashboard from '../components/dashboard/dashboard';
+import { UserDataProvider } from '../components/dashboard/UserDataProvider';
 
 export default function DashboardPage() {
   return (
