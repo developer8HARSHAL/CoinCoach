@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from './components/auth/AuthContext';
 import Footer from "./components/Footer";
+import { LoadingProvider } from './components/loader/LoadingProvider';
 
 // Define the local fonts properly
 const geistSans = localFont({
@@ -38,13 +39,15 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <LoadingProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-grow">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </LoadingProvider>
         </AuthProvider>
       </body>
     </html>

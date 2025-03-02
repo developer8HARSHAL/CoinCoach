@@ -1,13 +1,13 @@
 import Homepage from "./components/Homepage";
 import CoinCoachLearning from "./components/CoinCoachLearning";
-import InvestmentBasics from "./components/inverstment/investmentbasics";
+import InvestmentBasics from "./components/investment/investmentbasics";
 
 export default function Home() {
   return (
     <div>
-      {/* <Homepage/> */}
+      <Homepage/>
       {/* <CoinCoachLearning/> */}
-      <InvestmentBasics/>
+      {/* <InvestmentBasics/> */}
     </div>
   );
 }
