@@ -5,7 +5,7 @@
 // import Link from 'next/link';
 // import Drag_Drop from './Drag_Drop';
 
-import Drag_Drop from "./Drag_Drop";
+import Drag_Drop from "./DragAndDrop/Drag_Drop";
 
 // const QuizComponent = () => {
 //   // const questions = [
