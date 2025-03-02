@@ -1,14 +1,14 @@
+
 import Homepage from "./components/Homepage";
 import CoinCoachLearning from "./components/CoinCoachLearning";
-<<<<<<< HEAD
-import InvestmentBasics from "./components/LearningModulesComponents/investment-basics";
-=======
-import InvestmentBasics from "./components/inverstment/investmentbasics";
->>>>>>> upstream/main
+import InvestmentBasics from "./inverstment/investment-basics";
+import CreditDebitCrossword from "./components/CreditDebitCrossword";
 
 export default function Home() {
   return (
     <div>
+      {/* <CreditDebitCrossword/> */}
+      <Homepage/>
       {/* <Homepage/> */}
       {/* <CoinCoachLearning/> */}
       <InvestmentBasics/>
