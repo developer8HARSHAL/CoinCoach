@@ -7,7 +7,9 @@ import depts from '../../../public/depts.jpg'
 import saving from '../../../public/saving.png'
 import QuizComponent from './Quiz'
 import LearningModule from './LearningModule'
-
+import CreditDebt from './credit_debt_management/CreditDebt'
+import CreditDebt2 from './credit_debt_management/CreditDebt2page'
+import CreditDebtModule from './CreditDebtModule'
 
 
 export default function SavingsPage() {
@@ -137,7 +139,10 @@ export default function SavingsPage() {
             </Link>
           </button>
         </div> */}
-      <LearningModule/>
+      {/* <LearningModule/> */}
+      {/* <CreditDebt/> */}
+      {/* <CreditDebt2/> */}
+      <CreditDebtModule/>
     </main>
   )
 }

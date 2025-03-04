@@ -6,6 +6,7 @@ import InvestmentBasics from "./components/investment/investmentbasics";
 export default function Home() {
   return (
     <div>
+  
       <Homepage/>
       {/* <CoinCoachLearning/> */}
       {/* <InvestmentBasics/> */}

@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Dashboard from '../components/Dashboard';
+import { UserDataProvider } from '../components/Dashboard';
 import Dashboard from '../components/dashboard/dashboard';
 import { UserDataProvider } from '../components/dashboard/UserDataProvider';
 
