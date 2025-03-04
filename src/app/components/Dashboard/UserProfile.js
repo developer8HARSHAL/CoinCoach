@@ -16,31 +16,35 @@ const UserProfile = ({ userData }) => {
           <div className="flex flex-col items-center">
             <div className="relative -mt-12">
               <img 
-                src={userData.profileImage} 
+                src={userData?.profileImage || '/default-profile.png'}  // fallback image if profileImage is undefined
                 alt="Profile" 
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
               />
               <span className="absolute bottom-1 right-1 bg-green-500 p-1.5 rounded-full border-2 border-white"></span>
             </div>
             <div className="text-center mt-3">
-              <h2 className="text-xl font-bold text-gray-800">{userData.name}</h2>
-              <p className="text-sm text-gray-600">{userData.email}</p>
+              <h2 className="text-xl font-bold text-gray-800">{userData?.name || 'Name Not Available'}</h2> {/* Fallback for name */}
+              <p className="text-sm text-gray-600">{userData?.email || 'Email Not Available'}</p> {/* Fallback for email */}
             </div>
           </div>
           
           <div className="mt-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Bio:</h3>
-            <p className="text-sm text-gray-600">{userData.bio}</p>
+            <p className="text-sm text-gray-600">{userData?.bio || 'Bio Not Available'}</p> {/* Fallback for bio */}
           </div>
           
           <div className="mt-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Financial Goals:</h3>
             <div className="flex flex-wrap gap-2">
-              {userData.demographics.financialGoals.map((goal, index) => (
-                <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                  {goal}
-                </Badge>
-              ))}
+              {userData?.demographics?.financialGoals?.length > 0 ? (
+                userData.demographics.financialGoals.map((goal, index) => (
+                  <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                    {goal}
+                  </Badge>
+                ))
+              ) : (
+                <p>No financial goals available.</p>
+              )}
             </div>
           </div>
           
@@ -64,16 +68,17 @@ const UserProfile = ({ userData }) => {
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-gray-50 p-3 rounded-lg">
                 <span className="text-xs text-gray-500 block">Age Group</span>
-                <span className="text-sm font-medium">{userData.demographics.ageGroup}</span>
+                <span className="text-sm font-medium">{userData?.demographics?.ageGroup || 'Not Available'}</span>
               </div>
+
               <div className="bg-gray-50 p-3 rounded-lg">
                 <span className="text-xs text-gray-500 block">Location</span>
-                <span className="text-sm font-medium">{userData.demographics.location}</span>
+                <span className="text-sm font-medium">{userData?.demographics?.location || 'Not Available'}</span>
               </div>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg">
               <span className="text-xs text-gray-500 block">Occupation</span>
-              <span className="text-sm font-medium">{userData.demographics.occupation}</span>
+              <span className="text-sm font-medium">{userData?.demographics?.occupation || 'Not Available'}</span> {/* Added fallback for occupation */}
             </div>
           </div>
         </CardContent>
