@@ -1,0 +1,26 @@
+[33mf0a8750[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;32mrecovered-work[m[33m)[m HEAD@{0}: reset: moving to recovered-work
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: checkout: moving from recovered-work to main
+[33mf0a8750[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;32mrecovered-work[m[33m)[m HEAD@{2}: checkout: moving from f0a87502809a6089c18dbf98fedac0421cfc4d9b to recovered-work
+[33mf0a8750[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;32mrecovered-work[m[33m)[m HEAD@{3}: checkout: moving from main to f0a8750
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{4}: reset: moving to origin/main
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{5}: reset: moving to origin/main
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{6}: checkout: moving from main to main
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{7}: reset: moving to origin/main
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{8}: checkout: moving from main to main
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{9}: checkout: moving from main to main
+[33m22fb887[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{10}: commit (merge): dashboard, nav and footer
+[33m4785488[m HEAD@{11}: commit (merge): sd
+[33mf0a8750[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;32mrecovered-work[m[33m)[m HEAD@{12}: commit: loader
+[33m361f2ea[m HEAD@{13}: commit: updated
+[33m9eee29d[m HEAD@{14}: commit: dashboard and investing
+[33mb598af5[m HEAD@{15}: commit (merge): dashboard and investment
+[33mf4c105b[m HEAD@{16}: commit: Saved local changes before pulling
+[33m29d19a4[m HEAD@{17}: commit (merge): Save local changes before pulling upstream
+[33ma06fffb[m HEAD@{18}: commit: Updated page.js
+[33m28f1a61[m HEAD@{19}: commit (merge): Save local changes before pulling upstream
+[33mdd0f963[m HEAD@{20}: commit: Save local changes before pulling upstream
+[33m2e2af80[m HEAD@{21}: commit: authentications
+[33m01dd988[m HEAD@{22}: commit: dashboard
+[33m29d846d[m HEAD@{23}: commit: login, signup and flip card
+[33m4afdd29[m HEAD@{24}: commit: login/signup and coincoachlearning
+[33m88131b7[m HEAD@{25}: clone: from https://github.com/master-ginger/CoinCoach.git

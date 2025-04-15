@@ -1,151 +1,168 @@
+// src/app/components/dashboard/UserDataProvider.js
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '../auth/AuthContext';
 
 const UserDataContext = createContext();
 
-export function UserDataProvider({ children }) {
+export const useUserData = () => useContext(UserDataContext);
+
+export const UserDataProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { toast } = useToast();
+  const { user } = useAuth(); // Get the authenticated user from AuthContext
 
+  // Fetch user data from MongoDB when component mounts or user changes
   useEffect(() => {
-    async function fetchUserData() {
+    const fetchUserData = async () => {
+      // Don't fetch if user is not logged in
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+    
       try {
-        // Assume we have the user ID from authentication context
-        // You'll need to replace this with your actual auth implementation
-        const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
-        
-        if (!uid) {
-          setLoading(false);
-          return;
+        setLoading(true);
+        console.log('Fetching user data for:', user.email);
+    
+        // Use the new endpoint with email as a query parameter
+        const response = await fetch(`/api/user/info?email=${encodeURIComponent(user.email)}`);
+        console.log('API response status:', response.status);
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API error:', errorData);
+          throw new Error(errorData.error || 'Failed to fetch user data');
         }
-
-        // Fetch user profile
-        const userResponse = await fetch(`/api/user?uid=${uid}`);
-        if (!userResponse.ok) throw new Error('Failed to fetch user data');
-        const userData = await userResponse.json();
-        
-        // Fetch progress data
-        const progressResponse = await fetch(`/api/progress?uid=${uid}`);
-        let progressData = null;
-        
-        if (progressResponse.ok) {
-          progressData = await progressResponse.json();
+    
+        const data = await response.json();
+        console.log('User data received:', data);
+        setUserData(data);
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError(err.message);
+    
+        // Fallback to default profile
+        if (user) {
+          const defaultUserData = {
+            name: user.displayName || "User Name",
+            email: user.email,
+            location: "",
+            bio: "Tell us about yourself",
+            jobTitle: "",
+            profileImage: user.photoURL || "",
+            demographics: {},
+            badges: [],
+            completedModules: 0,
+            inProgressModules: 0,
+            averageScore: 0
+          };
+    
+          setUserData(defaultUserData);
+    
+          toast({
+            title: 'Using default profile',
+            description: 'We\'ll save your information when you update your profile.',
+            variant: 'default',
+          });
         }
-
-        // Combine data and update modules with progress information
-        const combinedData = {
-          ...userData,
-          modules: userData.modules.map(module => {
-            // Find module progress if it exists
-            const moduleProgress = progressData?.modules?.find(m => m.moduleId === module.id);
-            
-            if (moduleProgress) {
-              return {
-                ...module,
-                progress: moduleProgress.progress || 0,
-                completedLessons: moduleProgress.completedSections || 0,
-                completed: moduleProgress.completed || false,
-                lastAccessed: moduleProgress.lastUpdated || module.lastAccessed
-              };
-            }
-            
-            return module;
-          })
-        };
-
-        // Recalculate overall progress
-        if (combinedData.modules.length > 0) {
-          const totalLessons = combinedData.modules.reduce((sum, module) => sum + module.totalLessons, 0);
-          const completedLessons = combinedData.modules.reduce((sum, module) => sum + (module.completedLessons || 0), 0);
-          
-          // Update analytics
-          combinedData.analytics.moduleEngagement = combinedData.modules.map(module => ({
-            module: module.title,
-            percentage: module.progress || 0
-          }));
-        }
-        
-        setUserData(combinedData);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setError(error.message);
       } finally {
         setLoading(false);
       }
-    }
+    };
+    
 
     fetchUserData();
-  }, []);
+  }, [user, toast]); // Add user as dependency to re-fetch when user changes
 
-  // Function to update progress
-  const updateModuleProgress = async (moduleId, moduleName, completedSections, totalSections, completed = false) => {
-    try {
-      const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
-      if (!uid) return;
-
-      const response = await fetch('/api/progress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uid,
-          moduleId,
-          moduleName,
-          completedSections,
-          totalSections,
-          completed
-        }),
+// Function to update user data in MongoDB
+const updateUserData = async (updatedData) => {
+  try {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to update your profile.',
+        variant: 'destructive',
       });
-
-      if (!response.ok) throw new Error('Failed to update progress');
-      
-      // Update local state to reflect changes immediately
-      setUserData(prevData => {
-        if (!prevData) return null;
-        
-        const progressPercentage = Math.round((completedSections / totalSections) * 100);
-        
-        return {
-          ...prevData,
-          modules: prevData.modules.map(module => 
-            module.id === moduleId 
-              ? {
-                  ...module,
-                  progress: progressPercentage,
-                  completedLessons: completedSections,
-                  completed: completed,
-                  lastAccessed: new Date()
-                } 
-              : module
-          ),
-          // Update module engagement in analytics
-          analytics: {
-            ...prevData.analytics,
-            moduleEngagement: prevData.modules.map(module => ({
-              module: module.title,
-              percentage: module.id === moduleId ? progressPercentage : module.progress || 0
-            }))
-          }
-        };
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error updating module progress:', error);
-      return false;
+      return;
     }
-  };
+    
+    setLoading(true);
+    console.log('Updating user data:', updatedData);
+    
+    // Change the endpoint from '/api/user' to '/api/user/profile'
+    // Change the method from 'PUT' to 'POST'
+    const response = await fetch('/api/user/profile', {
+      method: 'POST', // Changed from PUT to POST
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...updatedData,
+        email: user.email // Explicitly include the email
+      }),
+    });
+    
+    console.log('Update response status:', response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API update error:', errorData);
+      throw new Error(errorData.error || 'Failed to update user data');
+    }
+    
+    const data = await response.json();
+    console.log('Updated user data received:', data);
+    setUserData(data);
+    
+    toast({
+      title: 'Profile Updated',
+      description: 'Your profile information has been successfully updated.',
+      variant: 'default',
+    });
+  } catch (err) {
+    console.error('Error updating user data:', err);
+    setError(err.message);
+    
+    // Still update the local state even if saving to DB failed
+    setUserData(updatedData);
+    
+    toast({
+      title: 'Update Failed',
+      description: 'Changes saved locally, but couldn\'t update database. Please try again later.',
+      variant: 'destructive',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
+  // Calculate content filters based on user demographics
+  const contentFilters = userData?.demographics?.age 
+    ? {
+        ageRestricted: userData.demographics.age < 18,
+        // Add other filters as needed
+      }
+    : { ageRestricted: false };
+
+  // Provide user data and update function to all children
   return (
-    <UserDataContext.Provider value={{ userData, loading, error, updateModuleProgress }}>
+    <UserDataContext.Provider 
+      value={{ 
+        userData, 
+        updateUserData, 
+        loading, 
+        error,
+        contentFilters
+      }}
+    >
       {children}
     </UserDataContext.Provider>
   );
-}
+};
 
-export function useUserData() {
-  return useContext(UserDataContext);
-}
+export default UserDataProvider;

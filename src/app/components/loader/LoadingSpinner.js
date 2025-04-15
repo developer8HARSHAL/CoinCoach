@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 const LoadingSpinner = ({ isLoading }) => {
   if (!isLoading) return null;
   
-  // Bouncing coins animation
-  const containerVariants = {
+  // Simple fade animation for the overlay
+  const overlayVariants = {
     initial: { opacity: 0 },
     animate: { 
       opacity: 1,
@@ -19,22 +19,19 @@ const LoadingSpinner = ({ isLoading }) => {
     }
   };
 
-  // Variants for coin animations
-  const coinVariants = {
-    animate: (i) => ({
-      y: [-15, 0, -15],
-      scale: [1, 1.1, 1],
-      rotate: [0, 10, 0, -10, 0],
+  // Simple infinite spinner animation
+  const spinnerVariants = {
+    animate: {
+      rotate: 360,
       transition: {
-        duration: 1.5,
+        duration: 1,
         repeat: Infinity,
-        repeatType: "loop",
-        delay: i * 0.2,
+        ease: "linear"
       }
-    })
+    }
   };
 
-  // Variants for the progress bar
+  // Simple progress bar
   const progressVariants = {
     initial: { width: "0%" },
     animate: { 
@@ -45,41 +42,31 @@ const LoadingSpinner = ({ isLoading }) => {
 
   return (
     <motion.div 
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
-      variants={containerVariants}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      variants={overlayVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
-      <div className="bg-white rounded-xl p-8 flex flex-col items-center max-w-md w-full shadow-2xl border-2 border-yellow-400">
-        <div className="text-2xl font-bold mb-6 text-yellow-600">CoinCoach</div>
+      <div className="bg-white rounded-lg p-6 flex flex-col items-center max-w-xs w-full shadow-lg">
+        <div className="text-xl font-semibold mb-4 text-gray-800">CoinCoach</div>
         
-        <div className="flex justify-center items-center mb-8 relative">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <motion.div
-              key={i}
-              custom={i}
-              variants={coinVariants}
-              animate="animate"
-              className="w-10 h-10 mx-1 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg"
-            >
-              <span className="text-sm font-bold">$</span>
-            </motion.div>
-          ))}
-        </div>
+        <motion.div
+          variants={spinnerVariants}
+          animate="animate"
+          className="w-10 h-10 border-4 border-gray-200 border-t-yellow-500 rounded-full mb-4"
+        />
         
-        <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-4">
+        <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden mb-3">
           <motion.div 
-            className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600"
+            className="h-full bg-yellow-500"
             variants={progressVariants}
             initial="initial"
             animate="animate"
           />
         </div>
         
-        <p className="text-gray-600 font-medium text-center">
-          Loading your financial wisdom...
-        </p>
+        <p className="text-gray-600 text-sm">Loading...</p>
       </div>
     </motion.div>
   );
