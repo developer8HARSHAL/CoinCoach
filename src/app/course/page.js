@@ -1,4 +1,4 @@
-import TimeValueOfMoneyTheory from "../components/belowEighteen";
+import TimeValueOfMoneyTheory from "../components/youngCourses/belowEighteen";
 
 export default function course(){
     return(
