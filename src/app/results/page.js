@@ -1,6 +1,11 @@
-import Results from "../components/Results"
-export default function Results(){
-    return(
-        <Results/>
-    )
+'use client';
+import ResultsComponent from "../components/Results";
+import { UserDataProvider } from '../components/dashboard/UserDataProvider';
+
+export default function ResultsPage() {
+  return (
+    <UserDataProvider>
+      <ResultsComponent />
+    </UserDataProvider>
+  );
 }

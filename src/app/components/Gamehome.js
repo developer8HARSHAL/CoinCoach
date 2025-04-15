@@ -1,15 +1,15 @@
 "use client";
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Container, Typography } from "@mui/material";
+import { useRouter } from "next/navigation"; // ✅ Use Next.js router
+import { Button, Typography } from "@mui/material";
 import "./gamehome.css";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import animationData from "../lotties/game_background.json";
 
 const Gamehome = () => {
-  const navigate = useNavigate();
+  const router = useRouter(); // ✅ Use useRouter
 
   return (
     <div className="home-container">
@@ -43,7 +43,7 @@ const Gamehome = () => {
           <Button 
             variant="contained" 
             color="primary" 
-            onClick={() => navigate("/game")}
+            onClick={() => router.push("/game")} // ✅ Use router.push
             className="start-btn"
           >
             Start Playing

@@ -1,53 +1,104 @@
+'use client';
 import React from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { CheckCircle2, ChevronRight, Clock, BookOpen, Star } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowRight } from 'lucide-react';
-import Savings from '../Savings';
-// import Savings from '../../lotties/saving.json';
+import { useUserData } from './UserDataProvider';
 
-
-const ModuleCard = ({ module }) => {
-  const getBgColor = (progress) => {
-    if (progress >= 75) return "bg-gradient-to-br from-green-50 to-emerald-50 border-green-100";
-    if (progress >= 50) return "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100";
-    if (progress >= 25) return "bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-100";
-    return "bg-gradient-to-br from-gray-50 to-slate-50 border-gray-100";
-  };
+const ModuleCard = ({ module, onClick }) => {
+  const { contentFilters } = useUserData() || {};
+  
+  // If age restriction is applied and user is under 18, show restricted badge
+  const isRestricted = module.ageRestriction && contentFilters?.ageVerified && !contentFilters?.isAdult;
+  
+  const completedLessons = module.completedLessons || 0;
+  const totalLessons = module.totalLessons || 0;
+  const progress = module.progress || 0;
+  
+  // Calculate days since last access
+  const daysSinceLastAccess = module.lastAccessed ? 
+    Math.floor((new Date() - new Date(module.lastAccessed)) / (1000 * 60 * 60 * 24)) : 
+    null;
 
   return (
-    <Card className={`overflow-hidden shadow-md hover:shadow-lg transition-all ${getBgColor(module.progress)}`}>
+    <Card className={`overflow-hidden shadow-md transition-all duration-300 h-full flex flex-col ${isRestricted ? 'opacity-60' : 'hover:shadow-lg'}`}>
       <div className="relative">
-        <img 
-          src={Savings}
-          alt={module.title} 
+        <img
+          src={module.imageUrl || "/api/placeholder/400/200"}
+          alt={module.title}
           className="w-full h-40 object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h3 className="text-lg font-bold text-white">{module.title}</h3>
-        </div>
-        <div className="absolute top-3 right-3 bg-white/90 px-2 py-1 rounded-md text-xs font-medium text-gray-800">
-          {module.completedLessons}/{module.totalLessons} Lessons
-        </div>
+        
+        {/* Age restriction badge */}
+        {module.ageRestriction && (
+          <Badge className="absolute top-2 right-2 bg-amber-500">
+            18+
+          </Badge>
+        )}
+        
+        {progress === 100 && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-green-600">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
+            </Badge>
+          </div>
+        )}
       </div>
-      <CardContent className="p-5">
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{module.description}</p>
-        <div className="flex justify-between items-center text-sm mb-2">
-          <span className="text-gray-500">Progress</span>
-          <span className="font-medium text-gray-700">{module.progress}%</span>
+
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg font-bold">{module.title}</CardTitle>
+          {module.difficulty && (
+            <Badge variant="outline" className="text-xs font-normal">
+              {module.difficulty}
+            </Badge>
+          )}
         </div>
-        <Progress value={module.progress} className="h-2 mb-4" />
-        <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <span>
-            Last studied: {new Date(module.lastAccessed).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}
-          </span>
+        <CardDescription className="text-sm line-clamp-2">{module.description}</CardDescription>
+      </CardHeader>
+
+      <CardContent className="pb-2 flex-grow">
+        <div className="space-y-3">
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span>Progress</span>
+              <span>{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-1.5" />
+          </div>
+
+          <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex items-center">
+              <BookOpen className="w-3.5 h-3.5 mr-1 text-blue-500" />
+              <span>{completedLessons}/{totalLessons} lessons</span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-3.5 h-3.5 mr-1 text-blue-500" />
+              <span>{module.estimatedTime || "1h 30m"}</span>
+            </div>
+          </div>
+          
+          {daysSinceLastAccess !== null && (
+            <div className="text-xs text-gray-500">
+              {daysSinceLastAccess === 0 ? 'Last accessed today' : 
+                daysSinceLastAccess === 1 ? 'Last accessed yesterday' :
+                  `Last accessed ${daysSinceLastAccess} days ago`}
+            </div>
+          )}
         </div>
       </CardContent>
-      <CardFooter className="px-5 pb-5 pt-0">
-        <Button className="w-full" variant={module.progress > 0 ? "default" : "secondary"}>
-          {module.progress > 0 ? "Continue Learning" : "Start Learning"}
-          <ArrowRight className="ml-2 h-4 w-4" />
+
+      <CardFooter className="pt-0">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-between border-t pt-2 text-blue-600" 
+          onClick={() => onClick && onClick(module)}
+          disabled={isRestricted}
+        >
+          {isRestricted ? 'Age Restricted' : (progress > 0 ? 'Continue' : 'Start Learning')}
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>

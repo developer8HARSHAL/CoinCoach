@@ -27,6 +27,7 @@ export default function AuthModal({ isOpen, onClose, initialView }) {
                     onSwitchToLogin={() => setCurrentView('login')}
                 />
             )}
+            
         </>
     );
 }
