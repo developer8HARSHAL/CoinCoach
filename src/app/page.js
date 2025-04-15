@@ -1,11 +1,15 @@
-
+'use client';
 import Homepage from "./components/Homepage";
+import CoinCoachLearning from "./components/CoinCoachLearning";
+import InvestmentBasics from "./components/investment/investmentbasics";
+import { AuthProvider } from "./components/auth/AuthContext";
 
 export default function Home() {
   return (
-    <div>
-  
-      <Homepage/>
-    </div>
+    <AuthProvider>
+      <Homepage />
+      {/* <CoinCoachLearning /> */}
+      {/* <InvestmentBasics /> */}
+    </AuthProvider>
   );
 }

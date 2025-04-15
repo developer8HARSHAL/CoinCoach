@@ -2,19 +2,29 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from './components/auth/AuthContext';
+import AuthGate from './components/auth/AuthGate';
 import Footer from "./components/Footer";
+import { LoadingProvider } from './components/loader/LoadingProvider';
 
-// Define the local fonts properly
+// Define the local fonts with the correct path structure
 const geistSans = localFont({
-  src: "../../public/fonts/GeistVF.woff",
+  src: [
+    {
+      path: '../../public/fonts/GeistVF.woff',
+      weight: '100 900',
+    }
+  ],
   variable: "--font-geist-sans",
-  weight: "100 900",
 });
 
 const geistMono = localFont({
-  src: "../../public/fonts/GeistMonoVF.woff",
+  src: [
+    {
+      path: '../../public/fonts/GeistMonoVF.woff',
+      weight: '100 900',
+    }
+  ],
   variable: "--font-geist-mono",
-  weight: "100 900",
 });
 
 // Correct metadata with the right favicon path
@@ -38,13 +48,17 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <LoadingProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-grow">
+                <AuthGate>
+                  {children}
+                </AuthGate>
+              </main>
+              <Footer />
+            </div>
+          </LoadingProvider>
         </AuthProvider>
       </body>
     </html>

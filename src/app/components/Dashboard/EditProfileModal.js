@@ -1,23 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserData } from './UserDataProvider';
+import { useToast } from '@/hooks/use-toast';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
-  const { userData, updateUserData } = useUserData() || {};
+  const { userData, updateUserData, loading } = useUserData() || {};
+  const { toast } = useToast();
   
+  // Initialize form data from userData with default values
   const [formData, setFormData] = useState({
-    name: userData?.name || '',
-    email: userData?.email || '',
-    location: userData?.location || '',
-    bio: userData?.bio || '',
-    jobTitle: userData?.jobTitle || '',
-    profileImage: userData?.profileImage || ''
+    name: '',
+    email: '',
+    location: '',
+    bio: '',
+    jobTitle: '',
+    profileImage: '',
+    age: ''
   });
+
+  // Update form data when userData changes or modal opens
+  useEffect(() => {
+    if (isOpen && userData) {
+      setFormData({
+        name: userData.name || '',
+        email: userData.email || '',
+        location: userData.location || '',
+        bio: userData.bio || '',
+        jobTitle: userData.jobTitle || '',
+        profileImage: userData.profileImage || '',
+        age: userData.demographics?.age || ''
+      });
+    }
+  }, [isOpen, userData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,12 +57,45 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    updateUserData({
+    
+    // Check if age was added or updated
+    const ageChanged = userData?.demographics?.age !== parseInt(formData.age);
+    const ageAdded = !userData?.demographics?.age && formData.age;
+    
+    // Create updated userData with age in demographics
+    const updatedData = {
       ...userData,
-      ...formData
-    });
+      name: formData.name,
+      email: formData.email,
+      location: formData.location,
+      bio: formData.bio,
+      jobTitle: formData.jobTitle,
+      profileImage: formData.profileImage,
+      demographics: {
+        ...userData?.demographics,
+        age: parseInt(formData.age) || null,
+        ageGroup: parseInt(formData.age) < 18 ? "Under 18" : "Adult",
+        ageVerified: formData.age ? true : false,
+        updatedAt: new Date().toISOString()
+      },
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // Update user data in MongoDB through the API
+    await updateUserData(updatedData);
+    
+    // Show additional notification if age was added or changed
+    if (ageAdded || ageChanged) {
+      toast({
+        title: ageAdded ? "Age Information Added" : "Age Information Updated",
+        description: "Your learning content will be personalized based on your age.",
+        variant: "default",
+        duration: 5000
+      });
+    }
+    
     onClose();
   };
 
@@ -68,13 +120,33 @@ const EditProfileModal = ({ isOpen, onClose }) => {
           
           <Input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Full Name" required />
           <Input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" required />
+          
+          {/* Age input field with a note about personalization */}
+          <div>
+            <label htmlFor="age" className="block text-sm font-medium text-gray-500 mb-1">
+              Age <span className="text-blue-500 text-xs">(Used for content personalization)</span>
+            </label>
+            <Input 
+              id="age"
+              type="number" 
+              name="age"
+              min="1"
+              max="120"
+              value={formData.age} 
+              onChange={handleChange}
+              placeholder="Enter your age" 
+            />
+          </div>
+          
           <Input type="text" name="jobTitle" value={formData.jobTitle} onChange={handleChange} placeholder="Job Title" />
           <Input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="Location" />
           <Textarea name="bio" value={formData.bio} onChange={handleChange} placeholder="Short bio" rows={3} />
           
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
           </div>
         </form>
       </div>

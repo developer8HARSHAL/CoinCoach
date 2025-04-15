@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import SavingsModule from "./LearningModulesComponents/savingsModule";
 import BudgetingModule from "./LearningModulesComponents/budgetting";
-import InvestmentBasics from "./inverstment/investmentbasics";
+import InvestmentBasics from "./investment/investmentbasics";
 
 export default function LearningModule() {
   // State to manage which component to display
