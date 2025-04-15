@@ -1,6 +1,5 @@
 import Gamehome from "../components/Gamehome";
-export default function Gamehome(){
-    return(
-        <Gamehome/>
-    )
+
+export default function GamehomePage() {
+  return <Gamehome />;
 }

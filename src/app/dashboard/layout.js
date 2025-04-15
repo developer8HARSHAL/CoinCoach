@@ -1,12 +1,16 @@
-export const metadata = {
-  title: 'Dashboard',
-  description: 'Track your financial literacy progress with CoinCoach dashboard',
-}
+// src/app/dashboard/layout.js
+'use client';
+
+import React from 'react';
+import { AuthProvider } from '../components/auth/AuthContext';
+import UserDataProvider from '../components/dashboard/UserDataProvider';
 
 export default function DashboardLayout({ children }) {
   return (
-    <div className="dashboard-container bg-gray-50 min-h-screen">
-      {children}
-    </div>
-  )
+    <AuthProvider>
+      <UserDataProvider>
+        {children}
+      </UserDataProvider>
+    </AuthProvider>
+  );
 }
