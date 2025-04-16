@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FaDollarSign, FaCoins } from "react-icons/fa";
 
-export default function SimpleVsCompoundInterest() {
+export default function SimpleVsCompoundInterest({ onNext }) {
   const [time, setTime] = useState(5); // 5 years by default
   const [principal] = useState(1000); // Fixed Principal
   const [rate] = useState(0.08); // Fixed Rate (8%)
@@ -105,7 +105,7 @@ export default function SimpleVsCompoundInterest() {
         {/* 👉 Next Button */}
         <div className="flex justify-end mt-10">
           <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={onNext}            
             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition duration-300"
           >
             Next → 

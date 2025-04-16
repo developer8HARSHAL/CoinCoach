@@ -5,6 +5,7 @@ import { useState } from "react";
 import { FaChartLine, FaLightbulb } from "react-icons/fa";
 import OpportunityCostModule from "./opportunityCost";
 import SimpleVsCompoundInterest from "./interests";
+import BankStatementModule from "./bankStatementt";
 
 export default function LearningModuleContainer() {
   const [currentModule, setCurrentModule] = useState(1);
@@ -54,7 +55,7 @@ export default function LearningModuleContainer() {
         )}
 
         {currentModule === 5 && (
-          <OpportunityCostModule onNext={handleNext}/>
+          <BankStatementModule onNext={handleNext}/>
         )}
         
       </div>
