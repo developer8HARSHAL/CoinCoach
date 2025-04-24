@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import SavingsModule from "./LearningModulesComponents/savingsModule";
-import BudgetingModule from "./LearningModulesComponents/budgetting";
-import InvestmentBasics from "./investment/investmentbasics";
+import SavingsModule from "./adultcourses/LearningModulesComponents/savingsModule";
+import BudgetingModule from "./adultcourses/LearningModulesComponents/budgetting";
+import InvestmentBasics from "./adultcourses/investment/investmentbasics";
 
 export default function LearningModule() {
   // State to manage which component to display

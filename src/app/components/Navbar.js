@@ -72,10 +72,9 @@ const ListItem = React.forwardRef(({ className, title, children, icon, ...props 
 ListItem.displayName = "ListItem";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, notifications, notificationCount, markAllNotificationsAsRead } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState('login');
-  const [notificationCount, setNotificationCount] = useState(3);
   
   const openLogin = () => {
     setAuthModalView('login');
@@ -93,6 +92,31 @@ export default function Navbar() {
     }
     const names = user.displayName.split(' ');
     return (names[0].charAt(0) + (names.length > 1 ? names[names.length - 1].charAt(0) : '')).toUpperCase();
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllNotificationsAsRead();
+  };
+
+  // Format time to relative format (e.g. "10 minutes ago")
+  const formatRelativeTime = (isoString) => {
+    try {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+      if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+      
+      return date.toLocaleDateString();
+    } catch (e) {
+      return 'Recently';
+    }
   };
 
   // Course submenu items with icons and descriptions
@@ -177,97 +201,96 @@ export default function Navbar() {
                   </NavigationMenuItem>
                   
                   {/* Enhanced Courses Dropdown */}
-              {/* Enhanced Courses Dropdown */}
-<NavigationMenuItem>
-  <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
-    <BookOpen className="mr-1 h-4 w-4" />
-    <span>Courses</span>
-  </NavigationMenuTrigger>
-  <NavigationMenuContent>
-    <div className="w-[500px] lg:w-[450px] p-4">
-      <div className="grid gap-4">
-        <div className="col-span-4 grid grid-cols-2 gap-x-4">
-          {/* Popular Courses */}
-          <div>
-            <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Popular Courses</h4>
-            <ul className="grid gap-2">
-              {courseItems.slice(0, 3).map((item) => (
-                <ListItem
-                  key={item.title}
-                  title={item.title}
-                  href={item.href}
-                  icon={item.icon}
-                >
-                  {item.description}
-                </ListItem>
-              ))}
-            </ul>
-          </div>
-          {/* Specialized Topics */}
-          <div>
-            <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Specialized Topics</h4>
-            <ul className="grid gap-2">
-              {courseItems.slice(3).map((item) => (
-                <ListItem
-                  key={item.title}
-                  title={item.title}
-                  href={item.href}
-                  icon={item.icon}
-                >
-                  {item.description}
-                </ListItem>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div className="mt-4 pt-3 border-t border-gray-100">
-          <Link href="/courses" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700">
-            View all courses
-            <ChevronRight className="ml-1 h-3 w-3" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  </NavigationMenuContent>
-</NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
+                      <BookOpen className="mr-1 h-4 w-4" />
+                      <span>Courses</span>
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="w-[500px] lg:w-[450px] p-4">
+                        <div className="grid gap-4">
+                          <div className="col-span-4 grid grid-cols-2 gap-x-4">
+                            {/* Popular Courses */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Popular Courses</h4>
+                              <ul className="grid gap-2">
+                                {courseItems.slice(0, 3).map((item) => (
+                                  <ListItem
+                                    key={item.title}
+                                    title={item.title}
+                                    href={item.href}
+                                    icon={item.icon}
+                                  >
+                                    {item.description}
+                                  </ListItem>
+                                ))}
+                              </ul>
+                            </div>
+                            {/* Specialized Topics */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Specialized Topics</h4>
+                              <ul className="grid gap-2">
+                                {courseItems.slice(3).map((item) => (
+                                  <ListItem
+                                    key={item.title}
+                                    title={item.title}
+                                    href={item.href}
+                                    icon={item.icon}
+                                  >
+                                    {item.description}
+                                  </ListItem>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-gray-100">
+                            <Link href="/course" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700">
+                              View all courses
+                              <ChevronRight className="ml-1 h-3 w-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
 
-{/* Enhanced Resources Dropdown */}
-<NavigationMenuItem>
-  <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
-    <Database className="mr-1 h-4 w-4" />
-    <span>Resources</span>
-  </NavigationMenuTrigger>
-  <NavigationMenuContent>
-    <div className="w-[320px] p-4">
-      <div className="grid gap-2">
-        {/* Resource categories */}
-        <div>
-          <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Research & Analysis</h4>
-          <ul className="grid gap-2">
-            {resourceItems.map((item) => (
-              <ListItem
-                key={item.title}
-                title={item.title}
-                href={item.href}
-                icon={item.icon}
-              >
-                {item.description}
-              </ListItem>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <div className="mt-4 pt-3 border-t border-gray-100">
-        <Link href="/resources" className="text-sm font-medium text-yellow-600 flex items-center hover:text-yellow-700">
-          Explore our complete resource library
-          <ChevronRight className="ml-1 h-4 w-4" />
-        </Link>
-      </div>
-    </div>
-  </NavigationMenuContent>
-</NavigationMenuItem>
-</NavigationMenuList>
-</NavigationMenu>
+                  {/* Enhanced Resources Dropdown */}
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
+                      <Database className="mr-1 h-4 w-4" />
+                      <span>Resources</span>
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="w-[320px] p-4">
+                        <div className="grid gap-2">
+                          {/* Resource categories */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Research & Analysis</h4>
+                            <ul className="grid gap-2">
+                              {resourceItems.map((item) => (
+                                <ListItem
+                                  key={item.title}
+                                  title={item.title}
+                                  href={item.href}
+                                  icon={item.icon}
+                                >
+                                  {item.description}
+                                </ListItem>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="mt-4 pt-3 border-t border-gray-100">
+                          <Link href="/resources" className="text-sm font-medium text-yellow-600 flex items-center hover:text-yellow-700">
+                            Explore our complete resource library
+                            <ChevronRight className="ml-1 h-4 w-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
             </div>
 
             {/* User Authentication Section */}
@@ -290,46 +313,38 @@ export default function Navbar() {
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex justify-between items-center">
                           <h4 className="text-sm font-semibold">Notifications</h4>
-                          <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-blue-600 hover:text-blue-800">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-auto p-0 text-xs text-blue-600 hover:text-blue-800"
+                            onClick={handleMarkAllAsRead}
+                          >
                             Mark all as read
                           </Button>
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <div className="max-h-80 overflow-y-auto">
-                        {[
-                          {
-                            title: "New course available",
-                            description: "DeFi Fundamentals course is now available",
-                            time: "10 minutes ago",
-                            unread: true
-                          },
-                          {
-                            title: "Market alert",
-                            description: "Bitcoin price increased by 5% in the last hour",
-                            time: "1 hour ago",
-                            unread: true
-                          },
-                          {
-                            title: "Forum activity",
-                            description: "Someone replied to your question about staking",
-                            time: "3 hours ago",
-                            unread: true
-                          }
-                        ].map((notification, i) => (
-                          <DropdownMenuItem key={i} className="p-0">
-                            <Link href="/notifications" className="block w-full px-4 py-3 hover:bg-gray-50">
-                              <div className={`flex gap-3 ${notification.unread ? 'font-medium' : ''}`}>
-                                <div className={`w-2 self-stretch ${notification.unread ? 'bg-yellow-400' : 'bg-transparent'} rounded-full`} />
-                                <div className="flex-1">
-                                  <p className="text-sm">{notification.title}</p>
-                                  <p className="text-xs text-gray-500">{notification.description}</p>
-                                  <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+                        {notifications && notifications.length > 0 ? (
+                          notifications.map((notification, i) => (
+                            <DropdownMenuItem key={i} className="p-0">
+                              <Link href="/notifications" className="block w-full px-4 py-3 hover:bg-gray-50">
+                                <div className={`flex gap-3 ${notification.unread ? 'font-medium' : ''}`}>
+                                  <div className={`w-2 self-stretch ${notification.unread ? 'bg-yellow-400' : 'bg-transparent'} rounded-full`} />
+                                  <div className="flex-1">
+                                    <p className="text-sm">{notification.title}</p>
+                                    <p className="text-xs text-gray-500">{notification.description}</p>
+                                    <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(notification.time)}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          <div className="py-4 text-center text-gray-500 text-sm">
+                            No notifications
+                          </div>
+                        )}
                       </div>
                       <DropdownMenuItem asChild className="p-0">
                         <Link href="/notifications" className="block w-full p-2 text-center text-sm font-medium text-yellow-600 hover:bg-yellow-50">
@@ -480,133 +495,143 @@ export default function Navbar() {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="pl-8 space-y-2">
-                              {courseItems.map((item) => (
-                                <SheetClose asChild key={item.title}>
-                                  <Link 
-                                    href={item.href}
-                                    className="flex items-center py-2 text-sm text-gray-600 hover:text-yellow-600"
-                                  >
-                                    {item.icon}
-                                    <span className="ml-2">{item.title}</span>
-                                  </Link>
-                                </SheetClose>
-                              ))}
-                              <SheetClose asChild>
-                                <Link 
-                                  href="/courses"
-                                  className="flex items-center py-2 text-sm font-medium text-yellow-600"
-                                >
-                                  View All Courses
-                                </Link>
-                              </SheetClose>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                        
-                        {/* Mobile Resources Accordion */}
-                        <AccordionItem value="resources" className="border-none">
-                          <AccordionTrigger className="py-2 text-base font-medium text-gray-700 hover:no-underline">
-                            <div className="flex items-center">
-                              <Database className="mr-3 h-5 w-5 text-yellow-500" />
-                              Resources
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="pl-8 space-y-2">
-                              {resourceItems.map((item) => (
-                                <SheetClose asChild key={item.title}>
-                                  <Link 
-                                    href={item.href}
-                                    className="flex items-center py-2 text-sm text-gray-600 hover:text-yellow-600"
-                                  >
-                                    {item.icon}
-                                    <span className="ml-2">{item.title}</span>
-                                  </Link>
-                                </SheetClose>
-                              ))}
-                              <SheetClose asChild>
-                                <Link 
-                                  href="/resources"
-                                  className="flex items-center py-2 text-sm font-medium text-yellow-600"
-                                >
-                                  Explore All Resources
-                                </Link>
-                              </SheetClose>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                      
-                      {user ? (
-                        <>
-                          <div className="border-t my-4"></div>
-                          <SheetClose asChild>
-                            <Link href="/dashboard" className="flex items-center py-2 text-base font-medium text-gray-700">
-                              <BarChart2 className="mr-3 h-5 w-5 text-yellow-500" />
-                              Dashboard
-                            </Link>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Link href="/profile" className="flex items-center py-2 text-base font-medium text-gray-700">
-                              <span className="mr-3 text-xl text-yellow-500">👤</span>
-                              Profile Settings
-                            </Link>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Link href="/my-courses" className="flex items-center py-2 text-base font-medium text-gray-700">
-                              <BookOpen className="mr-3 h-5 w-5 text-yellow-500" />
-                              My Courses
-                            </Link>
-                          </SheetClose>
-                          <div className="border-t my-4"></div>
-                          <SheetClose asChild>
-                            <button
-                              onClick={logout}
-                              className="flex items-center w-full text-left py-2 text-base font-medium text-red-600"
-                            >
-                              <span className="mr-3 text-xl">🚪</span>
-                              Sign Out
-                            </button>
-                          </SheetClose>
-                        </>
-                      ) : (
-                        <div className="mt-6 space-y-4">
-                          <SheetClose asChild>
-                            <Button
-                              onClick={openLogin}
-                              variant="outline"
-                              className="w-full justify-center"
-                            >
-                              Log In
-                            </Button>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Button
-                              onClick={openSignup}
-                              className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
-                            >
-                              Sign Up
-                            </Button>
-                          </SheetClose>
-                        </div>
-                      )}
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+  <div className="pl-8 py-2 space-y-2">
+    {courseItems.map((item, index) => (
+      <SheetClose key={index} asChild>
+        <Link 
+          href={item.href} 
+          className="flex items-center py-2 text-sm text-gray-600 hover:text-yellow-600"
+        >
+          {item.icon}
+          <span className="ml-2">{item.title}</span>
+        </Link>
+      </SheetClose>
+    ))}
+    <SheetClose asChild>
+      <Link href="/courses" className="flex items-center py-2 text-sm font-medium text-yellow-600">
+        View all courses
+        <ChevronRight className="ml-1 h-4 w-4" />
+      </Link>
+    </SheetClose>
+  </div>
+</AccordionContent>
+</AccordionItem>
 
-      {/* Authentication Modal */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        view={authModalView}
-        setView={setAuthModalView}
-      />
-    </>
-  );
+{/* Mobile Resources Accordion */}
+<AccordionItem value="resources" className="border-none">
+  <AccordionTrigger className="py-2 text-base font-medium text-gray-700 hover:no-underline">
+    <div className="flex items-center">
+      <Database className="mr-3 h-5 w-5 text-yellow-500" />
+      Resources
+    </div>
+  </AccordionTrigger>
+  <AccordionContent>
+    <div className="pl-8 py-2 space-y-2">
+      {resourceItems.map((item, index) => (
+        <SheetClose key={index} asChild>
+          <Link 
+            href={item.href} 
+            className="flex items-center py-2 text-sm text-gray-600 hover:text-yellow-600"
+          >
+            {item.icon}
+            <span className="ml-2">{item.title}</span>
+          </Link>
+        </SheetClose>
+      ))}
+      <SheetClose asChild>
+        <Link href="/resources" className="flex items-center py-2 text-sm font-medium text-yellow-600">
+          Explore all resources
+          <ChevronRight className="ml-1 h-4 w-4" />
+        </Link>
+      </SheetClose>
+    </div>
+  </AccordionContent>
+</AccordionItem>
+</Accordion>
+
+{/* Mobile notifications */}
+{user && (
+  <SheetClose asChild>
+    <Link href="/notifications" className="flex items-center py-2 text-base font-medium text-gray-700 mt-2">
+      <Bell className="mr-3 h-5 w-5 text-yellow-500" />
+      Notifications
+      {notificationCount > 0 && (
+        <Badge variant="destructive" className="ml-2 bg-red-500">
+          {notificationCount}
+        </Badge>
+      )}
+    </Link>
+  </SheetClose>
+)}
+
+{/* User specific links (mobile) */}
+{user ? (
+  <>
+    <SheetClose asChild>
+      <Link href="/dashboard" className="flex items-center py-2 text-base font-medium text-gray-700 mt-2">
+        <BarChart2 className="mr-3 h-5 w-5 text-yellow-500" />
+        Dashboard
+      </Link>
+    </SheetClose>
+    <SheetClose asChild>
+      <Link href="/profile" className="flex items-center py-2 text-base font-medium text-gray-700">
+        <span className="mr-3 h-5 w-5 flex items-center justify-center text-yellow-500">👤</span>
+        Profile Settings
+      </Link>
+    </SheetClose>
+    <SheetClose asChild>
+      <Link href="/my-courses" className="flex items-center py-2 text-base font-medium text-gray-700">
+        <BookOpen className="mr-3 h-5 w-5 text-yellow-500" />
+        My Courses
+      </Link>
+    </SheetClose>
+    <div 
+      className="flex items-center py-2 text-base font-medium text-red-600 cursor-pointer mt-4"
+      onClick={() => {
+        logout();
+      }}
+    >
+      <span className="mr-3 h-5 w-5 flex items-center justify-center">🚪</span>
+      Sign Out
+    </div>
+  </>
+) : (
+  <div className="mt-4 pt-4 space-y-4 border-t border-gray-100">
+    <SheetClose asChild>
+      <Button 
+        variant="outline" 
+        className="w-full justify-center"
+        onClick={openLogin}
+      >
+        Log In
+      </Button>
+    </SheetClose>
+    <SheetClose asChild>
+      <Button 
+        className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
+        onClick={openSignup}
+      >
+        Sign Up
+      </Button>
+    </SheetClose>
+  </div>
+)}
+</div>
+</SheetContent>
+</Sheet>
+</div>
+</div>
+</div>
+</div>
+</nav>
+
+{/* Auth Modal */}
+<AuthModal 
+  isOpen={isAuthModalOpen} 
+  onClose={() => setIsAuthModalOpen(false)} 
+  view={authModalView}
+  setView={setAuthModalView}
+/>
+</>
+);
 }

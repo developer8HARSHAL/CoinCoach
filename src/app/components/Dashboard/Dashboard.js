@@ -11,6 +11,15 @@ import { useToast } from '@/hooks/use-toast';
 import UserProfile from './UserProfile';
 import ModuleCard from './ModuleCard';
 import { useUserData } from './UserDataProvider';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Component for module cards with progress information
 const ModuleProgressCard = ({ module, position }) => {
@@ -109,6 +118,9 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("progress");
   const [moduleProgress, setModuleProgress] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [gameData, setGameData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [gameDataError, setGameDataError] = useState(null);
 
   // Fetch user progress data
   useEffect(() => {
@@ -149,6 +161,60 @@ const Dashboard = () => {
     fetchProgress();
   }, []);
 
+  // Fetch game history data from MongoDB
+  useEffect(() => {
+    const fetchGameData = async () => {
+      setIsLoading(true);
+      setGameDataError(null);
+      
+      try {
+        // Try to get email from localStorage or sessionStorage
+        const email = localStorage.getItem('email') || sessionStorage.getItem('email');
+        if (!email) {
+          setIsLoading(false);
+          console.warn("⚠️ No email found in storage");
+          setGameDataError("No user email found. Please log in again.");
+          return;
+        }
+        
+        console.log("Fetching game data for:", email);
+        
+        // Fetch game data for the current user
+        const response = await fetch(`/api/user/games?email=${encodeURIComponent(email)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("Game data received:", data);
+        
+        // Check if we got valid game data back
+        if (!data || (data.error && !data.gameHistory)) {
+          throw new Error(data.error || "Invalid data received from server");
+        }
+        
+        // Set the game data state
+        setGameData(data);
+      } catch (error) {
+        console.error("❌ Failed to fetch game data:", error);
+        setGameDataError(error.message || "Failed to load game data");
+        
+        // Set default data as fallback
+        setGameData({
+          totalGamesPlayed: 0,
+          bestGameScore: 0,
+          lastGamePlayed: null,
+          gameHistory: []
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchGameData();
+  }, []);
+
   // Set selected date once userData is loaded
   useEffect(() => {
     if (userData?.activityLog?.length > 0) {
@@ -168,10 +234,11 @@ const Dashboard = () => {
   }, [userData, contentFilters, toast]);
   
   // Loading state
-  if (!userData && !moduleProgress) {
+  if (!userData && !moduleProgress && isLoading) {
     return (
-     <>
-     </>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
@@ -182,7 +249,6 @@ const Dashboard = () => {
     modules: userData?.modules || [],
     activityLog: userData?.activityLog || [],
     streaks: userData?.streaks || { currentWeekly: 0, longestWeekly: 0 },
-    games: userData?.games || { completed: 0, total: 5, highestScore: 0, favoriteGame: "None", lastPlayed: new Date() },
     analytics: userData?.analytics || { 
       timeSpent: [
         { week: "Week 1", hours: 2 },
@@ -199,6 +265,47 @@ const Dashboard = () => {
     }
   };
 
+  // Safely access game history, handling undefined values
+  const gameHistory = gameData?.gameHistory || [];
+  
+  // Process game data for display
+  const gameStats = {
+    completed: gameData?.totalGamesPlayed || 0,
+    total: gameData?.totalGamesPlayed > 0 ? gameData.totalGamesPlayed + 3 : 5,
+    highestScore: gameData?.bestGameScore || 0,
+    lastPlayed: gameData?.lastGamePlayed ? new Date(gameData.lastGamePlayed) : null,
+    favoriteGame: gameData?.gameHistory?.length > 0 
+      ? getMostPlayedGameType(gameData.gameHistory)
+      : "None"
+  };
+
+  // Helper function to find the most played game type
+  function getMostPlayedGameType(gameHistory) {
+    if (!gameHistory || gameHistory.length === 0) return "None";
+    
+    const gameCounts = {};
+    gameHistory.forEach(game => {
+      const gameType = game.gameType || "Unknown";
+      gameCounts[gameType] = (gameCounts[gameType] || 0) + 1;
+    });
+    
+    // Find the game type with the most plays
+    return Object.keys(gameCounts).reduce(
+      (a, b) => gameCounts[a] > gameCounts[b] ? a : b, 
+      Object.keys(gameCounts)[0]
+    );
+  }
+
+  // Format game data for charts - using actual MongoDB data
+  const gameScoreData = gameHistory
+    .slice(0, 5) // Get the most recent 5 games
+    .reverse() // Reverse to show chronological order
+    .map((game, index) => ({
+      game: `Game ${index + 1}`,
+      score: game.score || 0,
+      type: game.gameType || "Unknown"
+    }));
+
   // Filter modules based on user age
   const filteredModules = getAgeAppropriateContent ? 
     getAgeAppropriateContent(safeUserData.modules) : 
@@ -213,7 +320,7 @@ const Dashboard = () => {
   const totalLessons = filteredModules.reduce((sum, module) => sum + (module.totalLessons || 0), 0);
   const completedLessons = filteredModules.reduce((sum, module) => sum + (module.completedLessons || 0), 0);
   const overallProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-  const gamesProgress = Math.round((safeUserData.games.completed / safeUserData.games.total) * 100) || 0;
+  const gamesProgress = Math.round((gameStats.completed / gameStats.total) * 100) || 0;
 
   const timeSpentData = safeUserData.analytics.timeSpent;
 
@@ -258,6 +365,34 @@ const Dashboard = () => {
   };
 
   const categoryFilteredModules = getFilteredModules();
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "Never";
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+  
+  // Format time for display
+  const formatTime = (dateString) => {
+    if (!dateString) return "Unknown";
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  };
+  
+  // Get game type color for visual differentiation
+  const getGameTypeColor = (gameType) => {
+    const colorMap = {
+      "Quiz": "bg-blue-600",
+      "Memory": "bg-green-600",
+      "Puzzle": "bg-purple-600",
+      "Finance": "bg-orange-600",
+      "Budget": "bg-teal-600",
+      "Investment": "bg-indigo-600"
+    };
+    
+    return colorMap[gameType] || "bg-gray-600";
+  };
 
   return (
     <div className="p-6 bg-gradient-to-b from-gray-50 to-blue-50 min-h-screen">
@@ -376,40 +511,135 @@ const Dashboard = () => {
                   </TabsContent>
                   
                   <TabsContent value="games" className="mt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-700 mb-4">Games Completion</h3>
-                        <div className="flex items-center space-x-4">
-                          <div className="w-24 h-24 rounded-full bg-blue-50 p-1 border border-blue-100 flex items-center justify-center">
-                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                              <div className="text-xl font-bold">{gamesProgress}%</div>
-                            </div>
-                          </div>
+                    {isLoading ? (
+                      <div className="flex justify-center items-center h-64">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        <span className="ml-2 text-gray-600">Loading game data...</span>
+                      </div>
+                    ) : gameDataError ? (
+                      <div className="bg-red-50 border border-red-200 rounded-md p-4 text-center">
+                        <div className="text-red-600 mb-2">Error loading game data</div>
+                        <div className="text-sm text-gray-600">{gameDataError}</div>
+                        <Button 
+                          className="mt-4 bg-blue-600 hover:bg-blue-700" 
+                          size="sm"
+                          onClick={() => window.location.reload()}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Game Stats Summary */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                           <div>
-                            <div className="text-sm text-gray-500">Completed</div>
-                            <div className="text-xl font-bold">{safeUserData.games.completed}/{safeUserData.games.total}</div>
-                            <div className="text-sm text-gray-500 mt-1">Highest Score</div>
-                            <div className="text-xl font-bold">{safeUserData.games.highestScore}</div>
+                            <h3 className="text-sm font-medium text-gray-700 mb-4">Games Completion</h3>
+                            <div className="flex items-center space-x-4">
+                              <div className="w-24 h-24 rounded-full bg-blue-50 p-1 border border-blue-100 flex items-center justify-center">
+                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                                  <div className="text-xl font-bold">{gamesProgress}%</div>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-sm text-gray-500">Completed</div>
+                                <div className="text-xl font-bold">{gameStats.completed}/{gameStats.total}</div>
+                                <div className="text-sm text-gray-500 mt-1">Highest Score</div>
+                                <div className="text-xl font-bold">{gameStats.highestScore}</div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-700 mb-4">Game Activity</h3>
-                        <div className="space-y-3">
-                          <div className="bg-blue-50 p-3 rounded-md">
-                            <div className="text-sm text-gray-600">Favorite Game</div>
-                            <div className="text-lg font-medium">{safeUserData.games.favoriteGame}</div>
-                          </div>
-                          <div className="bg-blue-50 p-3 rounded-md">
-                            <div className="text-sm text-gray-600">Last Played</div>
-                            <div className="text-lg font-medium">
-                              {new Date(safeUserData.games.lastPlayed).toLocaleDateString()}
+                          
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-700 mb-4">Game Activity</h3>
+                            <div className="space-y-3">
+                              <div className="bg-blue-50 p-3 rounded-md">
+                                <div className="text-sm text-gray-600">Favorite Game</div>
+                                <div className="text-lg font-medium">{gameStats.favoriteGame}</div>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-md">
+                                <div className="text-sm text-gray-600">Last Played</div>
+                                <div className="text-lg font-medium">
+                                  {gameStats.lastPlayed ? formatDate(gameStats.lastPlayed) : "Never played"}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
+                        
+                        {/* Game History Table */}
+                        <div className="mt-6 bg-white rounded-lg p-4 shadow-sm">
+                          <h3 className="text-lg font-medium mb-4">Game History</h3>
+                          
+                          {gameHistory.length > 0 ? (
+                            <Table>
+                              <TableCaption>Your recent game activity</TableCaption>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Game Type</TableHead>
+                                  <TableHead>Score</TableHead>
+                                  <TableHead className="hidden md:table-cell">Date Played</TableHead>
+                                  <TableHead className="hidden md:table-cell">Time</TableHead>
+                                  <TableHead>Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {gameHistory.slice(0, 6).map((game, index) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="font-medium flex items-center">
+                                      <div className={`w-3 h-3 rounded-full mr-2 ${getGameTypeColor(game.gameType)}`}></div>
+                                      {game.gameType || "Unknown Game"}
+                                    </TableCell>
+                                    <TableCell className="font-bold">{game.score || 0}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{formatDate(game.timestamp)}</TableCell>
+                                    <TableCell className="hidden md:table-cell">
+                                      {formatTime(game.timestamp)}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge className={game.completed ? "bg-green-600" : "bg-yellow-500"}>
+                                        {game.completed ? "Completed" : "In Progress"}
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <div className="text-center p-8 bg-gray-50 rounded-md">
+                              <Gamepad2 className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+                              <p className="text-gray-500">No game history found.</p>
+                              <p className="text-gray-400 text-sm">Play some games to see your history here.</p>
+                              <Button className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm" onClick={() => window.location.href = '/game'}>
+                                Start Playing
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Game Performance Chart - only render if we have data */}
+                        {gameScoreData.length > 0 && (
+                          <div className="mt-6">
+                            <h3 className="text-sm font-medium text-gray-700 mb-4">Recent Game Performance</h3>
+                            <div className="h-52">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={gameScoreData}
+                                  margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                  <XAxis dataKey="game" />
+                                  <YAxis />
+                                  <Tooltip formatter={(value, name, props) => {
+                                    return [`Score: ${value}`, `${props.payload.type}`];
+                                  }} />
+                                  <Bar dataKey="score" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                  // Continuing from the BarChart in the game performance section
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </TabsContent>
                   
                   <TabsContent value="quiz" className="mt-0">
@@ -422,7 +652,7 @@ const Dashboard = () => {
                         >
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
                           <XAxis dataKey="quiz" />
-                          <YAxis domain={[0, 100]} />
+                          <YAxis domain={[0, 100]} unit="%" />
                           <Tooltip formatter={(value) => [`${value}%`, 'Score']} />
                           <Bar dataKey="score" fill="#4f46e5" radius={[4, 4, 0, 0]} />
                         </BarChart>
@@ -435,9 +665,9 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Module Categories */}
+        {/* Learning Modules Section */}
         <div>
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Learning Modules</h2>
             <div className="flex space-x-2">
               {moduleCategories.map((category) => (
@@ -453,23 +683,45 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categoryFilteredModules.length > 0 ? (
-              categoryFilteredModules.map((module, index) => (
-                <ModuleProgressCard key={module.id} module={module} position={index} />
-              ))
-            ) : (
-              <div className="col-span-full bg-white p-8 rounded-lg text-center">
-                <h3 className="text-lg font-medium mb-2">No modules found</h3>
-                <p className="text-gray-500">
-                  {contentFilters?.ageVerified && !contentFilters?.isAdult
-                    ? "There are no modules available for your age group in this category."
-                    : "No modules found in this category."}
-                </p>
-              </div>
-            )}
-          </div>
+          {categoryFilteredModules.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categoryFilteredModules.map((module, i) => (
+                <ModuleProgressCard
+                  key={module.id}
+                  module={{
+                    title: module.moduleName || `Module ${i + 1}`,
+                    description: module.description || "Learn essential skills and concepts in this comprehensive module.",
+                    progress: module.progress || 0,
+                    totalLessons: module.totalLessons || 5,
+                    completedLessons: module.completedLessons || 0,
+                    lastAccessed: module.lastAccessed,
+                    estimatedTime: module.estimatedTime || "1h 30m",
+                    imageUrl: module.imageUrl
+                  }}
+                  position={i}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <CardTitle className="mb-2">No modules found</CardTitle>
+              <CardDescription>
+                {selectedCategory !== 'all' 
+                  ? `No modules found in the ${selectedCategory} category. Try selecting a different category.`
+                  : `No learning modules available yet. Check back soon for new content!`}
+              </CardDescription>
+              {selectedCategory !== 'all' && (
+                <Button className="mt-4" variant="outline" onClick={() => setSelectedCategory('all')}>
+                  View All Modules
+                </Button>
+              )}
+            </Card>
+          )}
         </div>
+
+        
+              
       </div>
     </div>
   );

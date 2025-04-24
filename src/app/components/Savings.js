@@ -7,13 +7,13 @@ import depts from '../../../public/depts.jpg'
 import saving from '../../../public/saving.png'
 import QuizComponent from './Quiz'
 import LearningModule from './LearningModule'
-import CreditDebt from './credit_debt_management/CreditDebt'
-import CreditDebt2 from './credit_debt_management/CreditDebt2page'
+import CreditDebt from './adultcourses/credit_debt_management/CreditDebt'
+import CreditDebt2 from './adultcourses/credit_debt_management/CreditDebt2page'
 import CreditDebtModule from './CreditDebtModule'
-import FinancialIndependenceModule1 from './financial_independence/FinancialIndependenceModule1';
-import FinancialIndependenceModule2 from './financial_independence/FinancialIndependenceModule2'
-import FinancialIndependenceAssessment from "./financial_independence/FinancialIndependenceAssessment"
-import FinancialIndependence from './FinancialIndependence'
+import FinancialIndependenceModule1 from './adultcourses/financial_independence/FinancialIndependenceModule1';
+import FinancialIndependenceModule2 from './adultcourses/financial_independence/FinancialIndependenceModule2'
+import FinancialIndependenceAssessment from "./adultcourses/financial_independence/FinancialIndependenceAssessment"
+import FinancialIndependence from './adultcourses/FinancialIndependence'
 
 export default function SavingsPage() {
   return (
