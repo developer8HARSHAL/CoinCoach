@@ -9,6 +9,7 @@ import Games from "../lotties/game.json";
 import money from "../lotties/Money.json";
 import HomeImg from "../lotties/home_img.json";
 import { FaChalkboardTeacher, FaChartLine, FaShieldAlt, FaUsers, FaCheckCircle } from 'react-icons/fa';
+import Chatbot from './chatbot';
 
 // Animation variants
 const fadeIn = {
@@ -532,6 +533,8 @@ export default function Homepage() {
           </div>
         </div>
       </div>
+
+      <Chatbot/>
 
       {/* Added CSS for animations */}
       <style jsx>{`
