@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import FinancialIndependenceModule1 from "./financial_independence/FinancialIndependenceModule1";
-import FinancialIndependenceModule2 from "./financial_independence/FinancialIndependenceModule2";
-import FinancialIndependenceAssessment from "./financial_independence/FinancialIndependenceAssessment";
+import FinancialIndependenceModule1 from "./Above18/financial_independence/FinancialIndependenceModule1";
+import FinancialIndependenceModule2 from "./Above18/financial_independence/FinancialIndependenceModule2";
+import FinancialIndependenceAssessment from "./Above18/financial_independence/FinancialIndependenceAssessment";
 
 export default function FinancialIndependence() {
   const [currentModule, setCurrentModule] = useState("Module1");
