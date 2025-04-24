@@ -7,8 +7,8 @@ import {
   Percent, ChevronDown, ChevronUp
 } from 'lucide-react';
 import Lottie from "lottie-react";
-import person1Animation from "../../lotties/person1.json";
-import person2Animation from "../../lotties/person2.json";
+import person1Animation from "../../../lotties/person1.json";
+import person2Animation from "../../../lotties/person2.json";
 
 export default function CreditDebt2() {
   const [openDebt, setOpenDebt] = useState(null);

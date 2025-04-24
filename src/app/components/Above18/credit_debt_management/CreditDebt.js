@@ -9,8 +9,8 @@ import {
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
-import DebtHigh from "../../lotties/person1.json";
-import DebtSmall from "../../lotties/person2.json";
+import DebtHigh from "../../../lotties/person1.json";
+import DebtSmall from "../../../lotties/person2.json";
 
 export default function CreditDebt() {
     const [hoveredMethod, setHoveredMethod] = useState(null);
