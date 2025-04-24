@@ -1,87 +1,149 @@
 "use client"
 
-import { FaExchangeAlt, FaBalanceScale } from "react-icons/fa";
+import { FaExchangeAlt, FaBalanceScale, FaArrowRight } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { useState } from "react";
 
 export default function OpportunityCostModule({ onNext }) {
+  const [activeChoice, setActiveChoice] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+
+  const choices = [
+    {
+      option: "🍕 Spend ₹500 on pizza tonight",
+      cost: "₹500 not invested (could grow to ~₹1,200 in 5 years)",
+      emoji: "🍕→📉"
+    },
+    {
+      option: "🛍️ Buy ₹2,000 sneakers now",
+      cost: "₹2,000 not saved (could be 1 month of SIP investments)",
+      emoji: "👟→💸"
+    },
+    {
+      option: "🎮 Play 2 hours of video games",
+      cost: "2 hours not spent learning a new skill",
+      emoji: "🕹️→📚"
+    },
+    {
+      option: "📱 Scroll social media for 1 hour",
+      cost: "1 hour not spent on a side hustle",
+      emoji: "📱→💼"
+    }
+  ];
+
+  const handleChoiceSelect = (index) => {
+    setActiveChoice(index);
+    setShowResult(true);
+    setTimeout(() => setShowResult(false), 3000);
+  };
+
   return (
-    <div className="space-y-20">
+    <div className="space-y-12 md:space-y-16 max-w-4xl mx-auto px-4">
 
       {/* 🔁 Hero Section */}
-      <section className="text-center">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-blue-700 drop-shadow-sm">
-          🔁 Opportunity Cost: The Hidden Price Tag
-        </h1>
-        <p className="mt-4 text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-          Every decision costs you something — even if it feels free. Let’s unpack the secret cost behind every choice you make.
-        </p>
-      </section>
-
-      {/* ⚖️ Core Idea */}
-      <section className="bg-white p-8 md:p-10 rounded-3xl shadow-xl border-l-[6px] border-blue-600">
-        <div className="flex items-center gap-3 text-blue-700 mb-4">
-          <FaBalanceScale className="text-2xl" />
-          <h2 className="text-3xl font-semibold">Trade-offs Are Everywhere</h2>
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center"
+      >
+        <div className="flex justify-center mb-4">
+          <FaExchangeAlt className="text-5xl text-blue-600" />
         </div>
-        <p className="text-gray-700 text-lg leading-relaxed">
-          Opportunity cost is the value of the thing you didn’t choose. It’s what you gave up when picking one option over another.
-          <br /><br />
-          Spend ₹500 on pizza today? That’s ₹500 less growing in your future investments 🍕→📉.
+        <h1 className="text-3xl md:text-4xl font-bold text-blue-700">
+          The Hidden Cost of Every Choice
+        </h1>
+        <p className="mt-4 text-gray-700 leading-relaxed">
+          Every "yes" means saying "no" to something else. Let's uncover what you're really giving up.
         </p>
+      </motion.section>
+
+      {/* ⚖️ Core Concept */}
+      <section className="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+        <div className="flex items-center gap-3 text-blue-700 mb-3">
+          <FaBalanceScale className="text-xl" />
+          <h2 className="text-xl font-semibold">What Is Opportunity Cost?</h2>
+        </div>
+        <div className="space-y-4 text-gray-700">
+          <p>It's the value of the <span className="font-semibold">next best alternative</span> you give up when making a choice.</p>
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <p className="font-medium">Example:</p>
+            <p>Choosing to watch TV for 2 hours means giving up time you could have spent learning, exercising, or earning.</p>
+          </div>
+        </div>
       </section>
 
-      {/* 🔍 Visual Comparison */}
-      <section className="grid md:grid-cols-2 items-center gap-10 bg-gradient-to-r from-blue-100 to-sky-50 p-8 md:p-10 rounded-3xl shadow-lg">
-        <div>
-          <h3 className="text-2xl font-semibold text-blue-700 mb-3">🔍 Choices You Didn't Realize You Made</h3>
-          <ul className="text-base text-gray-800 list-disc pl-6 space-y-2">
-            <li><strong>Choosing Netflix over reading?</strong> Lost a new skill. 🎥📘</li>
-            <li><strong>Buying fast fashion?</strong> Lost future savings. 🛍️💸</li>
-            <li><strong>Not investing early?</strong> Lost compounding gains. ⏳📈</li>
+      {/* 🎮 Interactive Decision Game */}
+      <section>
+        <h3 className="text-xl font-semibold text-center mb-6">Make a Choice, See the Cost</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {choices.map((choice, index) => (
+            <motion.button
+              key={index}
+              className={`p-4 rounded-lg border-2 text-left ${activeChoice === index ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
+              onClick={() => handleChoiceSelect(index)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="font-medium text-lg">{choice.option}</div>
+              {activeChoice === index && showResult && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-blue-700"
+                >
+                  <p>Opportunity cost: {choice.cost}</p>
+                  <div className="text-2xl mt-1">{choice.emoji}</div>
+                </motion.div>
+              )}
+            </motion.button>
+          ))}
+        </div>
+        <p className="text-center text-sm text-gray-500 mt-3">Click any option to see its hidden cost</p>
+      </section>
+
+      {/* 📊 Visual Comparison */}
+      <section className="bg-blue-50 p-6 rounded-xl">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <FaExchangeAlt className="text-blue-600" />
+          Real-Life Trade-offs
+        </h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-400">
+            <p className="font-medium">Daily ₹100 coffee</p>
+            <p className="text-sm text-gray-600 mt-1">= ₹3,000/month not invested</p>
+            <p className="text-sm text-gray-600">= ~₹2.5 lakhs in 5 years</p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-400">
+            <p className="font-medium">1 hour social media/day</p>
+            <p className="text-sm text-gray-600 mt-1">= 365 hours/year</p>
+            <p className="text-sm text-gray-600">= Could learn a new skill</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 💡 Key Insight */}
+      <section className="bg-purple-50 p-6 rounded-xl border-l-4 border-purple-500">
+        <h3 className="text-xl font-semibold mb-3 text-purple-800">Smart Thinking</h3>
+        <div className="space-y-3 text-gray-700">
+          <p>Opportunity cost isn't about depriving yourself, but about:</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><span className="font-semibold">Making conscious choices</span> with awareness</li>
+            <li><span className="font-semibold">Aligning small decisions</span> with big goals</li>
+            <li><span className="font-semibold">Finding balance</span> between now and later</li>
           </ul>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-md border border-blue-300">
-          <h4 className="text-blue-600 font-semibold mb-2 text-lg">💡 Think Before You Choose</h4>
-          <p className="text-gray-700 leading-relaxed">
-            Every “yes” today might secretly mean a “no” to a better tomorrow. Spend wisely, choose consciously.
-          </p>
-        </div>
       </section>
 
-      {/* 😂 Funny + Relatable Bits */}
-      <section className="bg-white/90 p-8 rounded-3xl shadow-xl border-l-[6px] border-yellow-400">
-        <div className="text-yellow-700 font-semibold text-2xl flex items-center gap-3 mb-4">
-          <FaExchangeAlt className="text-2xl" />
-          Funny + Relatable Bits
-        </div>
-        <ul className="text-gray-800 space-y-5 text-lg leading-relaxed">
-          <li>
-            🎮 <strong>The Game Trade:</strong> Bought a skin for ₹1000? That could’ve been ₹1200 by now. Now your skin’s old *and* broke.
-          </li>
-          <li>
-            🍟 <strong>Fast Food FOMO:</strong> Those ₹500 fries? Could’ve been half a mutual fund unit.
-          </li>
-          <li>
-            💤 <strong>Sleep vs Side Hustle:</strong> Netflix + chill today = No freelance bill tomorrow.
-          </li>
-        </ul>
-      </section>
-
-      {/* ✅ Summary */}
-      <section className="bg-blue-100 p-6 md:p-8 rounded-xl border-l-4 border-blue-600 text-gray-800">
-        <h4 className="text-blue-700 font-semibold text-2xl mb-2">🧠 Smart Thinking</h4>
-        <p className="text-lg leading-relaxed">
-          Start noticing the invisible price tag behind your decisions. Whether it’s money or time, what you’re giving up is just as important as what you’re choosing.
-        </p>
-      </section>
-
-      {/* 👉 Next Button */}
-      <div className="flex justify-end mt-10">
-        <button
+      {/* Next Button */}
+      <div className="flex justify-center pt-6">
+        <motion.button
           onClick={onNext}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition duration-300"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center gap-2"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          Next →
-        </button>
+          Learn Smart Decision Making <FaArrowRight />
+        </motion.button>
       </div>
     </div>
   );

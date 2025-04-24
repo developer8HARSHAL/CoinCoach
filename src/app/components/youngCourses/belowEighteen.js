@@ -7,6 +7,8 @@ import OpportunityCostModule from "./opportunityCost";
 import SimpleVsCompoundInterest from "./interests";
 import BankStatementModule from "./bankStatementt";
 import DigitalPaymentsModule from "./upiPayment";
+import BasicsOfTaxation from "./taxesbasics";
+import MutualFundsModule from "./mutualbasics";
 
 export default function LearningModuleContainer() {
   const [currentModule, setCurrentModule] = useState(1);
@@ -15,10 +17,7 @@ export default function LearningModuleContainer() {
   const handleNext = () => {
     if (currentModule < totalModules) {
       setCurrentModule(currentModule + 1);
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -39,36 +38,30 @@ export default function LearningModuleContainer() {
           Module {currentModule} of {totalModules}
         </p>
 
-        {currentModule === 1 && (
-          <TimeValueOfMoneyModule onNext={handleNext} />
-        )}
+        {currentModule === 1 && <TimeValueOfMoneyModule onNext={handleNext} />}
+        {currentModule === 2 && <InflationImpactModule onNext={handleNext} />}
+        {currentModule === 3 && <OpportunityCostModule onNext={handleNext} />}
+        {currentModule === 4 && <SimpleVsCompoundInterest onNext={handleNext} />}
+        {currentModule === 5 && <BankStatementModule onNext={handleNext} />}
+        {currentModule === 6 && <DigitalPaymentsModule onNext={handleNext} />}
+        {currentModule === 7 && <BasicsOfTaxation onNext={handleNext} />}
+        {currentModule === 8 && <MutualFundsModule onNext={handleNext} />}
+       
 
-        {currentModule === 2 && (
-          <InflationImpactModule onNext={handleNext}/>
-        )}
-
-        {currentModule === 3 && (
-          <OpportunityCostModule onNext={handleNext}/>
-        )}
-
-        {currentModule === 4 && (
-          <SimpleVsCompoundInterest onNext={handleNext}/>
-        )}
-
-        {currentModule === 5 && (
-          <BankStatementModule onNext={handleNext}/>
-        )}
-
-        {currentModule === 6 && (
-          <DigitalPaymentsModule onNext={handleNext}/>
-        )}
-        
       </div>
     </div>
   );
 }
 
 function TimeValueOfMoneyModule({ onNext }) {
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const handleAnswer = (option) => {
+    setSelectedOption(option);
+    setShowAnswer(true);
+  };
+
   return (
     <div className="space-y-20">
 
@@ -129,16 +122,43 @@ function TimeValueOfMoneyModule({ onNext }) {
           Relatable + Hilarious Scenarios
         </div>
         <ul className="text-gray-800 space-y-5 text-lg leading-relaxed">
-          <li>
-            🧁 <strong>The Cupcake Dilemma:</strong> Spend ₹100 now on a cupcake, or invest it and get a full dessert buffet next year? 🍩🎂
-          </li>
-          <li>
-            🎮 <strong>Gamer Logic:</strong> ₹2,000 on a game skin now or invest it and get a whole PS6 later? Think like a boss. 🕹️📈
-          </li>
-          <li>
-            👵🏽 <strong>Grandma’s Gold:</strong> "Back in my day, ₹500 meant gold." Now? “Two samosas and a paper napkin.” Inflation’s a sneaky thief. 🥲
-          </li>
+          <li>🧁 <strong>The Cupcake Dilemma:</strong> Spend ₹100 now on a cupcake, or invest it and get a full dessert buffet next year? 🍩🎂</li>
+          <li>🎮 <strong>Gamer Logic:</strong> ₹2,000 on a game skin now or invest it and get a whole PS6 later? Think like a boss. 🕹️📈</li>
+          <li>👵🏽 <strong>Grandma’s Gold:</strong> "Back in my day, ₹500 meant gold." Now? “Two samosas and a paper napkin.” Inflation’s a sneaky thief. 🥲</li>
         </ul>
+      </section>
+
+      {/* 🧠 Quick Quiz */}
+      <section className="bg-indigo-50 p-6 md:p-8 rounded-xl shadow-lg border-l-4 border-purple-400">
+        <h4 className="text-purple-700 font-semibold text-2xl mb-4">🧠 Quick Quiz!</h4>
+        <p className="text-lg text-gray-800 mb-6">
+          What happens if you invest ₹1000 for 10 years at 10% annual interest?
+        </p>
+        <div className="space-y-4">
+          <button
+            onClick={() => handleAnswer("wrong")}
+            className={`w-full px-6 py-4 rounded-lg border transition ${
+              selectedOption === "wrong" ? "bg-red-100" : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            💸 You lose money
+          </button>
+          <button
+            onClick={() => handleAnswer("right")}
+            className={`w-full px-6 py-4 rounded-lg border transition ${
+              selectedOption === "right" ? "bg-green-100" : "bg-white hover:bg-gray-100"
+            }`}
+          >
+            📈 Your money grows with interest
+          </button>
+        </div>
+        {showAnswer && (
+          <div className={`mt-4 p-4 rounded-xl text-lg font-medium text-center transition-all duration-300 ${
+            selectedOption === "right" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+            {selectedOption === "right" ? "🎉 Correct! That's the power of compounding!" : "❌ Oops! Actually, compounding helps your money grow."}
+          </div>
+        )}
       </section>
 
       {/* ✨ Summary */}
