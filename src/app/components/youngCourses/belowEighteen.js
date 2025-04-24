@@ -6,6 +6,7 @@ import { FaChartLine, FaLightbulb } from "react-icons/fa";
 import OpportunityCostModule from "./opportunityCost";
 import SimpleVsCompoundInterest from "./interests";
 import BankStatementModule from "./bankStatementt";
+import DigitalPaymentsModule from "./upiPayment";
 
 export default function LearningModuleContainer() {
   const [currentModule, setCurrentModule] = useState(1);
@@ -56,6 +57,10 @@ export default function LearningModuleContainer() {
 
         {currentModule === 5 && (
           <BankStatementModule onNext={handleNext}/>
+        )}
+
+        {currentModule === 6 && (
+          <DigitalPaymentsModule onNext={handleNext}/>
         )}
         
       </div>
