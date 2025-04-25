@@ -7,24 +7,14 @@ import depts from '../../../public/depts.jpg'
 import saving from '../../../public/saving.png'
 import QuizComponent from './Quiz'
 import LearningModule from './LearningModule'
-import CreditDebt from './Above18/credit_debt_management/CreditDebt'
-import CreditDebt2 from './Above18/credit_debt_management/CreditDebt2page'
-import CreditDebtModule from './CreditDebtModule'
-import FinancialIndependenceModule1 from './Above18/financial_independence/FinancialIndependenceModule1';
-import FinancialIndependenceModule2 from './Above18/financial_independence/FinancialIndependenceModule2'
-import FinancialIndependenceAssessment from "./Above18/financial_independence/FinancialIndependenceAssessment"
-import FinancialIndependence from './FinancialIndependence'
-import TaxModule1 from './Above18/taxation/TaxModule1'
-import TaxModule2 from './Above18/taxation/TaxModule2'
-import TaxModule3 from "./Above18/taxation/TaxModule3"
-import TaxModule4 from './Above18/taxation/TaxModule4'
-import TaxJourney from './TaxModule'
+
+
 
 export default function SavingsPage() {
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Hero Section */}
-      {/* <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
+      <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="w-full md:w-1/2">
             <Image
@@ -146,12 +136,7 @@ export default function SavingsPage() {
             Take Quiz
             </Link>
           </button>
-        </div> */}
-      {/* <LearningModule/> */}
-      {/* <CreditDebtModule/> */}
-      {/* <FinancialIndependence/> */}
-      {/* <TaxModule4/> */}
-      <TaxJourney/>
+        </div>
       </main>
   )
 }
