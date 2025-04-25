@@ -247,17 +247,17 @@ export default function MutualFundsModule({ onNext }) {
         </div>
       </section>
 
-      {/* Next Button */}
-      <div className="flex justify-center pt-6">
-        <motion.button
-          onClick={onNext}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center gap-2"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Learn How to Start Investing <FaArrowRight />
-        </motion.button>
-      </div>
+    {/* Next Button */}
+<div className="flex justify-center pt-6">
+  <motion.button
+    onClick={onNext}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center gap-2"
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    Complete Course <FaArrowRight />
+  </motion.button>
+</div>
     </div>
   );
 }

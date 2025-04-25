@@ -1,7 +1,7 @@
 "use client"
 
 import InflationImpactModule from "./inflation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaChartLine, FaLightbulb } from "react-icons/fa";
 import OpportunityCostModule from "./opportunityCost";
 import SimpleVsCompoundInterest from "./interests";
@@ -9,24 +9,51 @@ import BankStatementModule from "./bankStatementt";
 import DigitalPaymentsModule from "./upiPayment";
 import BasicsOfTaxation from "./taxesbasics";
 import MutualFundsModule from "./mutualbasics";
+import { useAuth } from "../../components/auth/AuthContext";
+import useModuleProgress from "../../../hooks/useModuleProgress";
 
 export default function LearningModuleContainer() {
-  const [currentModule, setCurrentModule] = useState(1);
+  const { user } = useAuth();
+  const { currentModule, handleNext, isLoading } = useModuleProgress('below-eighteen');
   const totalModules = 8;
 
-  const handleNext = () => {
-    if (currentModule < totalModules) {
-      setCurrentModule(currentModule + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  // Handle next button click with progress saving
+  const onModuleComplete = () => {
+    handleNext(totalModules);
   };
 
   const getProgressPercentage = () => (currentModule / totalModules) * 100;
 
+  // Show login prompt if user is not authenticated
+  if (!user && !isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex items-center justify-center p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-purple-700 mb-4">Login Required</h2>
+          <p className="text-gray-700 mb-6">Please sign in to track your learning progress</p>
+          <button 
+            onClick={() => useAuth().openModal('login')}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition duration-300"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while fetching progress
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex items-center justify-center">
+        <div className="text-2xl text-purple-700">Loading your progress...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 px-6 py-10">
       <div className="max-w-6xl mx-auto space-y-10">
-
         {/* 📊 Progress Bar */}
         <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
           <div
@@ -38,20 +65,19 @@ export default function LearningModuleContainer() {
           Module {currentModule} of {totalModules}
         </p>
 
-        {currentModule === 1 && <TimeValueOfMoneyModule onNext={handleNext} />}
-        {currentModule === 2 && <InflationImpactModule onNext={handleNext} />}
-        {currentModule === 3 && <OpportunityCostModule onNext={handleNext} />}
-        {currentModule === 4 && <SimpleVsCompoundInterest onNext={handleNext} />}
-        {currentModule === 5 && <BankStatementModule onNext={handleNext} />}
-        {currentModule === 6 && <DigitalPaymentsModule onNext={handleNext} />}
-        {currentModule === 7 && <BasicsOfTaxation onNext={handleNext} />}
-        {currentModule === 8 && <MutualFundsModule onNext={handleNext} />}
-       
-
+        {currentModule === 1 && <TimeValueOfMoneyModule onNext={onModuleComplete} />}
+        {currentModule === 2 && <InflationImpactModule onNext={onModuleComplete} />}
+        {currentModule === 3 && <OpportunityCostModule onNext={onModuleComplete} />}
+        {currentModule === 4 && <SimpleVsCompoundInterest onNext={onModuleComplete} />}
+        {currentModule === 5 && <BankStatementModule onNext={onModuleComplete} />}
+        {currentModule === 6 && <DigitalPaymentsModule onNext={onModuleComplete} />}
+        {currentModule === 7 && <BasicsOfTaxation onNext={onModuleComplete} />}
+        {currentModule === 8 && <MutualFundsModule onNext={onModuleComplete} />}
       </div>
     </div>
   );
 }
+
 
 function TimeValueOfMoneyModule({ onNext }) {
   const [showAnswer, setShowAnswer] = useState(false);
