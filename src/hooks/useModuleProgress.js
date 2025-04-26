@@ -2,20 +2,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../app/components/auth/AuthContext';
 
-export default function useModuleProgress(moduleCategory = 'below-eighteen') {
+export default function useModuleProgress(courseId, totalModules = 2) {
   const { user } = useAuth();
-  const [currentModule, setCurrentModule] = useState(1);
+  const [currentModule, setCurrentModule] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch initial progress when component mounts
+  // Fetch initial progress when component mounts or courseId changes
   useEffect(() => {
-    if (!user) {
+    if (!user || !courseId) {
       setIsLoading(false);
       return;
     }
 
     fetchProgress();
-  }, [user]);
+  }, [user, courseId]);
 
   const fetchProgress = async () => {
     try {
@@ -25,9 +26,15 @@ export default function useModuleProgress(moduleCategory = 'below-eighteen') {
       if (response.ok) {
         const data = await response.json();
         
-        // If user has progress for this module category, set it
-        if (data.modules && data.modules[moduleCategory]) {
-          setCurrentModule(data.modules[moduleCategory].completedSections + 1);
+        // If user has progress for this course, set it
+        if (data.modules && data.modules[courseId]) {
+          const moduleData = data.modules[courseId];
+          setCurrentModule(Math.min(moduleData.completedSections, totalModules - 1));
+          setProgress(moduleData.progress);
+        } else {
+          // Initialize with default values
+          setCurrentModule(0);
+          setProgress(0);
         }
       }
     } catch (error) {
@@ -37,10 +44,14 @@ export default function useModuleProgress(moduleCategory = 'below-eighteen') {
     }
   };
 
-  // Save progress when advancing to next module
-  const saveProgress = async (currentModuleNumber, totalModules) => {
+  // Mark a module as complete and save progress
+  const markModuleComplete = async (moduleIndex) => {
     if (!user) return;
-
+    
+    // Calculate new progress
+    const completedSections = moduleIndex + 1;
+    const newProgress = Math.min(100, (completedSections / totalModules) * 100);
+    
     try {
       const response = await fetch('/api/progress', {
         method: 'POST',
@@ -49,11 +60,11 @@ export default function useModuleProgress(moduleCategory = 'below-eighteen') {
         },
         body: JSON.stringify({
           uid: user.uid,
-          moduleId: moduleCategory,
-          moduleName: "Below Eighteen Learning Path",
-          completedSections: currentModuleNumber,
+          moduleId: courseId,
+          moduleName: courseId, // You might want to use a more readable name
+          completedSections: completedSections,
           totalSections: totalModules,
-          progress: (currentModuleNumber / totalModules) * 100
+          progress: newProgress
         })
       });
 
@@ -62,6 +73,7 @@ export default function useModuleProgress(moduleCategory = 'below-eighteen') {
       }
       
       console.log("Progress saved successfully");
+      setProgress(newProgress);
       
       // Dispatch custom event to notify Dashboard that progress has been updated
       window.dispatchEvent(new Event('progressUpdated'));
@@ -71,22 +83,11 @@ export default function useModuleProgress(moduleCategory = 'below-eighteen') {
     }
   };
 
-  // Advance to next module and save progress
-  const handleNext = async (totalModules) => {
-    if (currentModule < totalModules) {
-      // Save progress for the current module before advancing
-      await saveProgress(currentModule, totalModules);
-      
-      // Advance to next module
-      setCurrentModule(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   return {
     currentModule,
     setCurrentModule,
-    handleNext,
+    progress,
+    markModuleComplete,
     isLoading
   };
 }

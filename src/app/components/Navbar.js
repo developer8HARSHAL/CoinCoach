@@ -253,6 +253,59 @@ export default function Navbar() {
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
+              {/* Enhanced Courses Dropdown */}
+<NavigationMenuItem>
+  <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
+    <BookOpen className="mr-1 h-4 w-4" />
+    <span>Courses</span>
+  </NavigationMenuTrigger>
+  <NavigationMenuContent>
+    <div className="w-[500px] lg:w-[450px] p-4">
+      <div className="grid gap-4">
+        <div className="col-span-4 grid grid-cols-2 gap-x-4">
+          {/* Popular Courses */}
+          <div>
+            <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Popular Courses</h4>
+            <ul className="grid gap-2">
+              {courseItems.slice(0, 3).map((item) => (
+                <ListItem
+                  key={item.title}
+                  title={item.title}
+                  href={item.href}
+                  icon={item.icon}
+                >
+                  {item.description}
+                </ListItem>
+              ))}
+            </ul>
+          </div>
+          {/* Specialized Topics */}
+          <div>
+            <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Specialized Topics</h4>
+            <ul className="grid gap-2">
+              {courseItems.slice(3).map((item) => (
+                <ListItem
+                  key={item.title}
+                  title={item.title}
+                  href={item.href}
+                  icon={item.icon}
+                >
+                  {item.description}
+                </ListItem>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <Link href="/allcourses" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700">
+            View all courses
+            <ChevronRight className="ml-1 h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  </NavigationMenuContent>
+</NavigationMenuItem>
 
                   {/* Enhanced Resources Dropdown */}
                   <NavigationMenuItem>
