@@ -1,184 +1,85 @@
-// import { connectToDatabase } from "@/lib/mongodb"; // Ensure this path is correct
-
-// export async function GET(request) {
-//   try {
-//     // Get the URL parameters
-//     const { searchParams } = new URL(request.url);
-//     const uid = searchParams.get("uid");
-
-//     if (!uid) {
-//       return new Response(
-//         JSON.stringify({ error: "User ID is required" }),
-//         {
-//           status: 400,
-//           headers: { "Content-Type": "application/json" },
-//         }
-//       );
-//     }
-
-//     console.log(`📊 Fetching progress data for user: ${uid}`);
-
-//     // Connect to MongoDB
-//     const { db } = await connectToDatabase();
-
-//     // ✅ Fix: Use the correct collection name ("progress")
-//     const userProgress = await db.collection("progress").findOne({ uid: uid });
-
-//     if (!userProgress) {
-//       console.log(`⚠️ No progress data found for user: ${uid}`);
-//       // If no progress data found, return an empty modules object
-//       return new Response(
-//         JSON.stringify({ modules: {} }),
-//         {
-//           status: 200,
-//           headers: { "Content-Type": "application/json" },
-//         }
-//       );
-//     }
-
-//     console.log(`✅ Successfully retrieved progress data for user: ${uid}`);
-
-//     // Return the module progress data
-//     return new Response(
-//       JSON.stringify({ modules: userProgress.modules }),
-//       {
-//         status: 200,
-//         headers: { "Content-Type": "application/json" },
-//       }
-//     );
-//   } catch (error) {
-//     console.error("❌ Error fetching progress data:", error);
-//     return new Response(
-//       JSON.stringify({ error: "Failed to fetch progress data" }),
-//       {
-//         status: 500,
-//         headers: { "Content-Type": "application/json" },
-//       }
-//     );
-//   }
-// }
-
-
-
-
-
-import { connectToDatabase } from "@/lib/mongodb";
+// src/app/api/progress/route.js
+import { NextResponse } from "next/server";
+import { doc, getDoc, setDoc } from "firebase/firestore"; 
+import { db } from "../../firebase/config";
 
 export async function GET(request) {
   try {
-    // Get the URL parameters
+    // Extract user ID from query params
     const { searchParams } = new URL(request.url);
     const uid = searchParams.get("uid");
 
     if (!uid) {
-      return new Response(
-        JSON.stringify({ error: "User ID is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
 
-    console.log(`📊 Fetching progress data for user: ${uid}`);
+    // Get user progress from Firestore
+    const userDoc = doc(db, "users", uid);
+    const userSnap = await getDoc(userDoc);
 
-    // Connect to MongoDB
-    const { db } = await connectToDatabase();
-
-    // Find user progress document
-    const userProgress = await db.collection("progress").findOne({ uid: uid });
-
-    if (!userProgress) {
-      console.log(`⚠️ No progress data found for user: ${uid}`);
-      // If no progress data found, return an empty modules object
-      return new Response(
-        JSON.stringify({ modules: {} }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+    if (!userSnap.exists()) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    console.log(`✅ Successfully retrieved progress data for user: ${uid}`);
-
-    // Return the module progress data
-    return new Response(
-      JSON.stringify({ modules: userProgress.modules || {} }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    const userData = userSnap.data();
+    
+    // Return user progress data
+    return NextResponse.json({
+      modules: userData.modules || {},
+    });
   } catch (error) {
-    console.error("❌ Error fetching progress data:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch progress data" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.error("Error in progress API:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { uid, moduleId, moduleName, completedSections, totalSections, progress } = body;
+    const { uid, moduleId, moduleName, completedSections, totalSections, progress } = await request.json();
 
-    // Validate required fields
     if (!uid || !moduleId) {
-      return new Response(
-        JSON.stringify({ error: "User ID and Module ID are required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return NextResponse.json({ error: "User ID and module ID are required" }, { status: 400 });
     }
 
-    // Connect to MongoDB
-    const { db } = await connectToDatabase();
+    // Get user document
+    const userDoc = doc(db, "users", uid);
+    const userSnap = await getDoc(userDoc);
 
-    // Update or create the progress document
-    const result = await db.collection("progress").updateOne(
-      { uid },
-      {
-        $set: {
-          [`modules.${moduleId}`]: {
+    // If user doesn't exist, initialize with empty data
+    if (!userSnap.exists()) {
+      await setDoc(userDoc, { 
+        modules: {
+          [moduleId]: {
             moduleName,
             completedSections,
             totalSections,
             progress,
-            lastUpdated: new Date()
+            lastUpdated: new Date().toISOString()
           }
         }
-      },
-      { upsert: true }
-    );
+      });
+    } else {
+      // Update existing user data
+      const userData = userSnap.data();
+      
+      await setDoc(userDoc, {
+        ...userData,
+        modules: {
+          ...userData.modules,
+          [moduleId]: {
+            moduleName,
+            completedSections,
+            totalSections,
+            progress,
+            lastUpdated: new Date().toISOString()
+          }
+        }
+      });
+    }
 
-    console.log(`✅ Progress updated for user ${uid}, module ${moduleId}`);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Progress updated successfully", 
-        moduleId
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Error updating progress:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to update progress" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.error("Error saving progress:", error);
+    return NextResponse.json({ error: "Failed to save progress" }, { status: 500 });
   }
 }

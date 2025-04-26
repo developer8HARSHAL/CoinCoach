@@ -77,14 +77,7 @@ export default function BankStatementModule({ onNext }) {
       </section>
 
       {/* 👉 Next Button */}
-      <div className="flex justify-end mt-10">
-        <button
-          onClick={onNext}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition duration-300"
-        >
-          Next →
-        </button>
-      </div>
+    
     </div>
   );
 }

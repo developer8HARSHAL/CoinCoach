@@ -1,4 +1,8 @@
 'use client';
+
+import { useRouter } from 'next/navigation';
+
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, User, BarChart2, PieChart, Award, Gamepad2, BookOpen, Target, Activity, ArrowRight, ArrowLeft, Bookmark, CheckCircle2, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +25,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Component for module cards with progress information
+// Add this near the top of your Dashboard component
+useEffect(() => {
+  const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
+  console.log("📌 Dashboard mounted, UID from storage:", uid);
+  
+  fetchProgress();
+  
+  // Set up event listener for custom progress update event
+  const handleProgressUpdate = () => {
+    console.log("🔄 Progress update event received!");
+    fetchProgress();
+  };
+  
+  window.addEventListener('progressUpdated', handleProgressUpdate);
+  
+  // Clean up event listener when component unmounts
+  return () => {
+    window.removeEventListener('progressUpdated', handleProgressUpdate);
+  };
+}, []);
+
+// Update the ModuleProgressCard component to ensure it works with your progress data
 const ModuleProgressCard = ({ module, position }) => {
   const bgColors = [
     "bg-gradient-to-br from-blue-500 to-purple-600",
@@ -47,16 +72,25 @@ const ModuleProgressCard = ({ module, position }) => {
     Math.floor((new Date() - new Date(module.lastAccessed)) / (1000 * 60 * 60 * 24)) : 
     null;
     
+  // Ensure we have a title to display
+  const title = module.title || module.moduleName || `Module ${position + 1}`;
+  // Ensure we have a description to display
+  const description = module.description || `Progress: ${module.progress?.toFixed(1) || 0}% complete`;
+  // Ensure we have a progress value
+  const progress = typeof module.progress === 'number' ? module.progress : 0;
+  
+  console.log(`🎨 Rendering card for module: ${title}, progress: ${progress}%`);
+  
   return (
     <Card className="overflow-hidden border shadow-md hover:shadow-xl h-full flex flex-col">
       <div className="relative">
-        <img src={imageSrc} alt={module.title} className="w-full h-48 object-cover" />
+        <img src={imageSrc} alt={title} className="w-full h-48 object-cover" />
         <div className="absolute top-0 right-0 p-2">
           <Badge className={`${position === 0 ? 'bg-yellow-500' : 'bg-blue-600'}`}>
             {position === 0 ? 'Recommended' : `Module ${position + 1}`}
           </Badge>
         </div>
-        {module.progress >= 100 && (
+        {progress >= 100 && (
           <div className="absolute bottom-0 right-0 p-2">
             <Badge className="bg-green-600">
               <CheckCircle2 className="w-4 h-4 mr-1" /> Completed
@@ -66,8 +100,8 @@ const ModuleProgressCard = ({ module, position }) => {
       </div>
       
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-bold line-clamp-1">{module.title}</CardTitle>
-        <CardDescription className="line-clamp-2">{module.description}</CardDescription>
+        <CardTitle className="text-xl font-bold line-clamp-1">{title}</CardTitle>
+        <CardDescription className="line-clamp-2">{description}</CardDescription>
       </CardHeader>
       
       <CardContent className="pb-3 flex-grow">
@@ -75,15 +109,15 @@ const ModuleProgressCard = ({ module, position }) => {
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-600">Progress</span>
-              <span className="font-medium text-gray-800">{module.progress}%</span>
+              <span className="font-medium text-gray-800">{progress}%</span>
             </div>
-            <Progress value={module.progress} className="h-2" />
+            <Progress value={progress} className="h-2" />
           </div>
           
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center text-gray-600">
               <Bookmark className="w-4 h-4 mr-1 text-blue-600" />
-              <span>{module.totalLessons || 0} lessons</span>
+              <span>{module.totalLessons || module.totalSections || 0} lessons</span>
             </div>
             <div className="flex items-center text-gray-600">
               <Clock className="w-4 h-4 mr-1 text-blue-600" />
@@ -103,7 +137,7 @@ const ModuleProgressCard = ({ module, position }) => {
       
       <CardFooter>
         <Button className="w-full bg-blue-600 hover:bg-blue-700">
-          {module.progress > 0 ? 'Continue Learning' : 'Start Learning'}
+          {progress > 0 ? 'Continue Learning' : 'Start Learning'}
         </Button>
       </CardFooter>
     </Card>
@@ -121,45 +155,62 @@ const Dashboard = () => {
   const [gameData, setGameData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [gameDataError, setGameDataError] = useState(null);
+  const router = useRouter();
 
-  // Fetch user progress data
-  useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
-        if (!uid) return;
-        
-        const response = await fetch(`/api/progress?uid=${uid}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-          // Process module data to include more details
-          const enhancedModules = {};
-          
-          if (data.modules) {
-            Object.keys(data.modules).forEach(moduleId => {
-              enhancedModules[moduleId] = {
-                ...data.modules[moduleId],
-                imageUrl: `/api/placeholder/400/200?text=${encodeURIComponent(data.modules[moduleId]?.moduleName || 'Module')}`,
-                estimatedTime: ['30m', '45m', '1h 15m', '2h', '1h 30m'][Math.floor(Math.random() * 5)],
-                lastAccessed: new Date(Date.now() - Math.floor(Math.random() * 15) * 24 * 60 * 60 * 1000)
-              };
-            });
-          }
-          
-          setModuleProgress(enhancedModules || {});
-        } else {
-          console.warn("⚠️ Request failed or returned error");
-          setModuleProgress({});
-        }
-      } catch (error) {
-        console.error("❌ Failed to fetch progress:", error);
+  const fetchProgress = async () => {
+    try {
+      const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
+      if (!uid) {
+        console.log("⚠️ No UID found in storage");
+        return;
+      }
+      
+      console.log("📊 Fetching progress data for user:", uid);
+      const response = await fetch(`/api/progress?uid=${uid}`);
+      console.log("📊 Progress API response status:", response.status);
+      
+      if (!response.ok) {
+        console.error("❌ Error fetching progress data:", response.statusText);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log("📊 Progress data received:", JSON.stringify(data));
+      
+      if (data && data.modules) {
+        console.log("✅ Setting module progress with data");
+        setModuleProgress(data.modules);
+      } else {
+        console.warn("⚠️ No modules in progress data");
         setModuleProgress({});
       }
-    };
+    } catch (error) {
+      console.error("❌ Failed to fetch progress:", error);
+      setModuleProgress({});
+    }
+  };
+
+// Make sure your useEffect includes the current user's UID
+// Replace your existing useEffect with this corrected version
+useEffect(() => {
+  const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
+  console.log("📌 Dashboard mounted, UID from storage:", uid);
   
+  fetchProgress();
+  
+  // Set up event listener for custom progress update event
+  const handleProgressUpdate = () => {
+    console.log("🔄 Progress update event received!");
     fetchProgress();
-  }, []);
+  };
+  
+  window.addEventListener('progressUpdated', handleProgressUpdate);
+  
+  // Clean up event listener when component unmounts
+  return () => {
+    window.removeEventListener('progressUpdated', handleProgressUpdate);
+  };
+}, []);
 
   // Fetch game history data from MongoDB
   useEffect(() => {
@@ -349,22 +400,39 @@ const Dashboard = () => {
       }
     });
   }
-
-  // Filter modules by category
-  const getFilteredModules = () => {
-    if (!moduleProgress) return [];
-    
-    const modules = Object.keys(moduleProgress).map(key => ({
-      id: key,
-      ...moduleProgress[key]
-    }));
-    
-    const ageFiltered = getAgeAppropriateContent ? getAgeAppropriateContent(modules) : modules;
-    if (selectedCategory === 'all') return ageFiltered;
-    return ageFiltered.filter(module => module.category === selectedCategory);
-  };
-
   const categoryFilteredModules = getFilteredModules();
+ // Add this console log right before rendering the filtered modules
+console.log("🎨 Selected category:", selectedCategory);
+console.log("🎨 Category filtered modules:", categoryFilteredModules);
+
+// Replace the existing module filtering code in Dashboard.js
+const getFilteredModules = () => {
+  console.log("🔍 Getting filtered modules from:", moduleProgress);
+  
+  if (!moduleProgress) {
+    console.log("⚠️ No module progress data available");
+    return [];
+  }
+  
+  const modules = Object.keys(moduleProgress).map(key => {
+    return {
+      id: key,
+      title: moduleProgress[key].moduleName || key,
+      description: `Complete ${moduleProgress[key].completedSections} of ${moduleProgress[key].totalSections} sections`,
+      progress: moduleProgress[key].progress || 0,
+      totalLessons: moduleProgress[key].totalSections || 0,
+      completedLessons: moduleProgress[key].completedSections || 0,
+      ...moduleProgress[key]
+    };
+  });
+  
+  console.log("📊 Processed modules:", modules);
+  
+  // Apply category filtering if selected
+  if (selectedCategory === 'all') return modules;
+  return modules.filter(module => module.category === selectedCategory);
+};
+
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -415,6 +483,20 @@ const Dashboard = () => {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {getFilteredModules().length > 0 ? (
+    getFilteredModules().map((module, index) => (
+      <ModuleProgressCard key={module.id} module={module} position={index} />
+    ))
+  ) : (
+    <div className="col-span-full bg-white p-8 rounded-lg text-center">
+      <h3 className="text-lg font-medium mb-2">No modules found</h3>
+      <p className="text-gray-500">
+        You haven't started any learning modules yet.
+      </p>
+    </div>
+  )}
+</div>
                   <Card className="bg-white/10 border-none shadow-none">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-medium mb-2">Learning Progress</h3>

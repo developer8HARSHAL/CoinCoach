@@ -7,6 +7,7 @@ import depts from '../../../public/depts.jpg'
 import saving from '../../../public/saving.png'
 import QuizComponent from './Quiz'
 import LearningModule from './LearningModule'
+<<<<<<< HEAD
 import CreditDebt from './adultcourses/credit_debt_management/CreditDebt'
 import CreditDebt2 from './adultcourses/credit_debt_management/CreditDebt2page'
 import CreditDebtModule from './CreditDebtModule'
@@ -14,12 +15,16 @@ import FinancialIndependenceModule1 from './adultcourses/financial_independence/
 import FinancialIndependenceModule2 from './adultcourses/financial_independence/FinancialIndependenceModule2'
 import FinancialIndependenceAssessment from "./adultcourses/financial_independence/FinancialIndependenceAssessment"
 import FinancialIndependence from './adultcourses/FinancialIndependence'
+=======
+
+
+>>>>>>> HEAD@{1}
 
 export default function SavingsPage() {
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Hero Section */}
-      {/* <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
+      <section className="mx-auto px-4 py-12 md:py-24 bg-yellow-400 ">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="w-full md:w-1/2">
             <Image
@@ -141,12 +146,7 @@ export default function SavingsPage() {
             Take Quiz
             </Link>
           </button>
-        </div> */}
-      {/* <LearningModule/> */}
-      {/* <CreditDebtModule/> */}
-      {/* <FinancialIndependenceModule2/> */}
-      {/* <FinancialIndependenceAssessment/> */}
-      <FinancialIndependence/>
+        </div>
       </main>
   )
 }
