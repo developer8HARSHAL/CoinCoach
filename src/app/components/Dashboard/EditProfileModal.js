@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserData } from './UserDataProvider';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/app/components/auth/AuthContext';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
   const { userData, updateUserData, loading } = useUserData() || {};
   const { toast } = useToast();
+  const { fetchNotifications } = useAuth();
   
   // Initialize form data from userData with default values
   const [formData, setFormData] = useState({
@@ -57,6 +59,23 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const updateProfileNotification = async () => {
+    try {
+      const response = await fetch('/api/user/notifications/profile-updated', {
+        method: 'PUT'
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to update profile notification:', response.status);
+      } else {
+        // Refresh notifications after updating
+        fetchNotifications();
+      }
+    } catch (error) {
+      console.error('Error updating profile notification:', error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -80,11 +99,15 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         ageVerified: formData.age ? true : false,
         updatedAt: new Date().toISOString()
       },
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      profileCompleted: true
     };
     
     // Update user data in MongoDB through the API
     await updateUserData(updatedData);
+    
+    // Update the profile notification
+    await updateProfileNotification();
     
     // Show additional notification if age was added or changed
     if (ageAdded || ageChanged) {
@@ -95,6 +118,14 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         duration: 5000
       });
     }
+    
+    // Show toast notification for profile update
+    toast({
+      title: "Profile Updated",
+      description: "Your profile information has been successfully updated.",
+      variant: "success",
+      duration: 3000
+    });
     
     onClose();
   };

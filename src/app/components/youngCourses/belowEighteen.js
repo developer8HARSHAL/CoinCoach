@@ -1,59 +1,11 @@
 "use client"
 
-import InflationImpactModule from "./inflation";
 import { useState } from "react";
 import { FaChartLine, FaLightbulb } from "react-icons/fa";
-import OpportunityCostModule from "./opportunityCost";
-import SimpleVsCompoundInterest from "./interests";
-import BankStatementModule from "./bankStatementt";
-import DigitalPaymentsModule from "./upiPayment";
-import BasicsOfTaxation from "./taxesbasics";
-import MutualFundsModule from "./mutualbasics";
+import { useAuth } from "../../components/auth/AuthContext";
 
-export default function LearningModuleContainer() {
-  const [currentModule, setCurrentModule] = useState(1);
-  const totalModules = 8;
-
-  const handleNext = () => {
-    if (currentModule < totalModules) {
-      setCurrentModule(currentModule + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const getProgressPercentage = () => (currentModule / totalModules) * 100;
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 px-6 py-10">
-      <div className="max-w-6xl mx-auto space-y-10">
-
-        {/* 📊 Progress Bar */}
-        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-purple-500 transition-all duration-500"
-            style={{ width: `${getProgressPercentage()}%` }}
-          ></div>
-        </div>
-        <p className="text-right text-sm text-gray-600">
-          Module {currentModule} of {totalModules}
-        </p>
-
-        {currentModule === 1 && <TimeValueOfMoneyModule onNext={handleNext} />}
-        {currentModule === 2 && <InflationImpactModule onNext={handleNext} />}
-        {currentModule === 3 && <OpportunityCostModule onNext={handleNext} />}
-        {currentModule === 4 && <SimpleVsCompoundInterest onNext={handleNext} />}
-        {currentModule === 5 && <BankStatementModule onNext={handleNext} />}
-        {currentModule === 6 && <DigitalPaymentsModule onNext={handleNext} />}
-        {currentModule === 7 && <BasicsOfTaxation onNext={handleNext} />}
-        {currentModule === 8 && <MutualFundsModule onNext={handleNext} />}
-       
-
-      </div>
-    </div>
-  );
-}
-
-function TimeValueOfMoneyModule({ onNext }) {
+// This module is now a single learning module component, not a container
+export default function TimeValueOfMoneyModule({ onNext }) {
   const [showAnswer, setShowAnswer] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
 
@@ -82,7 +34,7 @@ function TimeValueOfMoneyModule({ onNext }) {
           <h2 className="text-3xl font-semibold">The Big Brain Idea</h2>
         </div>
         <p className="text-gray-700 text-lg leading-relaxed">
-          ₹1000 today is NOT the same as ₹1000 tomorrow. Why? Because today’s ₹1000 can be <strong>invested</strong> and earn more money. That’s the magic of <span className="text-purple-600 font-semibold">compounding</span>.
+          ₹1000 today is NOT the same as ₹1000 tomorrow. Why? Because today's ₹1000 can be <strong>invested</strong> and earn more money. That's the magic of <span className="text-purple-600 font-semibold">compounding</span>.
           <br /><br />
           Think of it like planting a money seed 🌱 — give it time, water (investment), and sunlight (patience)... and boom! It grows into a money tree 🌳.
         </p>
@@ -110,7 +62,7 @@ function TimeValueOfMoneyModule({ onNext }) {
               ₹1000 × (1 + 0.08)<sup>5</sup> = ₹1,469.33
             </span>
             <br />
-            That’s ₹469.33 earned... for doing nothing but being smart early. 🧠💵
+            That's ₹469.33 earned... for doing nothing but being smart early. 🧠💵
           </p>
         </div>
       </section>
@@ -124,7 +76,7 @@ function TimeValueOfMoneyModule({ onNext }) {
         <ul className="text-gray-800 space-y-5 text-lg leading-relaxed">
           <li>🧁 <strong>The Cupcake Dilemma:</strong> Spend ₹100 now on a cupcake, or invest it and get a full dessert buffet next year? 🍩🎂</li>
           <li>🎮 <strong>Gamer Logic:</strong> ₹2,000 on a game skin now or invest it and get a whole PS6 later? Think like a boss. 🕹️📈</li>
-          <li>👵🏽 <strong>Grandma’s Gold:</strong> "Back in my day, ₹500 meant gold." Now? “Two samosas and a paper napkin.” Inflation’s a sneaky thief. 🥲</li>
+          <li>👵🏽 <strong>Grandma's Gold:</strong> "Back in my day, ₹500 meant gold." Now? "Two samosas and a paper napkin." Inflation's a sneaky thief. 🥲</li>
         </ul>
       </section>
 
@@ -170,14 +122,7 @@ function TimeValueOfMoneyModule({ onNext }) {
       </section>
 
       {/* 👉 Next Button */}
-      <div className="flex justify-end mt-10">
-        <button
-          onClick={onNext}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition duration-300"
-        >
-          Next →
-        </button>
-      </div>
+     
     </div>
   );
 }

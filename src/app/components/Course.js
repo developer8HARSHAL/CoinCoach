@@ -5,7 +5,13 @@ export default function Course({name,img,desc,addr}){
     return(
         <div className="lg:py-[50px] lg:mt-[-20px] mx-5 shadow-lg shadow-gray-600 rounded-3xl bg-white">
             <div>
-               <Image src={img} alt="piggy" className="lg:w-[500px] lg:h-[240px] rounded-ss-3xl rounded-se-3xl lg:mt-[-50px] "/>
+            <Image
+  src="/images/piggy.jpg"
+  alt="Piggy"
+  width={400} // adjust based on your image size
+  height={300}
+/>
+
             </div>
             <div>
                 <div className="lg:mt-[20px] text-center text-2xl inter font-semibold my-2">
