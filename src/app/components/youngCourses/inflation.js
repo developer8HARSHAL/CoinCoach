@@ -159,17 +159,7 @@ export default function InflationImpactModule({ onNext }) {
         </div>
       </section>
 
-      {/* Next Button */}
-      <div className="flex justify-center pt-6">
-        <motion.button
-          onClick={onNext}
-          className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium flex items-center gap-2"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Move to Next Lesson <FaArrowRight />
-        </motion.button>
-      </div>
+      
     </div>
   );
 }

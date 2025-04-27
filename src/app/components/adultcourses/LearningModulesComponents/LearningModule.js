@@ -1,8 +1,14 @@
 "use client";
 import React, { useState } from "react";
+<<<<<<< HEAD:src/app/components/adultcourses/LearningModulesComponents/LearningModule.js
+import SavingsModule from "./adultcourses/LearningModulesComponents/savingsModule";
+import BudgetingModule from "./adultcourses/LearningModulesComponents/budgetting";
+import InvestmentBasics from "./adultcourses/investment/investmentbasics";
+=======
 import SavingsModule from "./Above18/LearningModulesComponents/savingsModule";
 import BudgetingModule from "./Above18/LearningModulesComponents/budgetting";
 import InvestmentBasics from "./Above18/investment/investmentbasics";
+>>>>>>> HEAD@{1}:src/app/components/LearningModule.js
 
 export default function LearningModule() {
   // State to manage which component to display

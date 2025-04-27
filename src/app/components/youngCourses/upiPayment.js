@@ -155,14 +155,7 @@ export default function DigitalPaymentsModule({ onNext }) {
       </section>
 
       {/* Next Button */}
-      <div className="flex justify-center pt-6">
-        <button
-          onClick={onNext}
-          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"
-        >
-          Continue Learning <FaArrowRight />
-        </button>
-      </div>
+    
     </div>
   );
 }
