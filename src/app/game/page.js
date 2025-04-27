@@ -1,6 +1,7 @@
-import Game from "../components/Game"
+import GameMenu from "../components/gameMenu"
 export default function game(){
     return(
-        <Game/>
+        // <Game/>
+       <GameMenu/>
     )
 }
