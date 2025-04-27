@@ -19,11 +19,8 @@ export async function PUT(request) {
     const { db } = await connectToDatabase();
     const usersCollection = db.collection('users');
     
-<<<<<<< HEAD
     // Find the user
-=======
     // Find the user and their notifications
->>>>>>> HEAD@{1}
     const user = await usersCollection.findOne({ email: userEmail });
     
     if (!user) {
@@ -31,12 +28,10 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     
-<<<<<<< HEAD
     // Filter out all profile-related notifications and keep only non-profile ones
     let notifications = (user.notifications || []).filter(notif => 
       notif.title !== "Complete your profile" && 
       notif.title !== "Profile Updated"
-=======
     const notifications = user.notifications || [];
     
     // Check if "Profile Updated" notification already exists
@@ -47,28 +42,22 @@ export async function PUT(request) {
     // Find the "Complete your profile" notification
     const completeProfileIndex = notifications.findIndex(
       notif => notif.title === "Complete your profile"
->>>>>>> HEAD@{1}
     );
     
     // Create a new notification for profile update
     const profileUpdatedNotification = {
-<<<<<<< HEAD
       id: Date.now(),
-=======
       id: Date.now(), // Generate a unique ID
->>>>>>> HEAD@{1}
       title: "Profile Updated",
       description: "Your profile has been successfully updated.",
       time: new Date().toISOString(),
       unread: true
     };
     
-<<<<<<< HEAD
     // Add the new notification at the beginning of the array
     notifications.unshift(profileUpdatedNotification);
     
     // Update the entire notifications array
-=======
     // Remove existing "Profile Updated" notification if it exists
     if (existingProfileUpdateIndex !== -1) {
       notifications.splice(existingProfileUpdateIndex, 1);
@@ -83,17 +72,13 @@ export async function PUT(request) {
     notifications.unshift(profileUpdatedNotification);
     
     // Update user notifications in database
->>>>>>> HEAD@{1}
     await usersCollection.updateOne(
       { email: userEmail },
       { $set: { notifications: notifications } }
     );
     
-<<<<<<< HEAD
     console.log('Successfully replaced all profile notifications with a single update notification');
-=======
     console.log('Successfully updated profile notification');
->>>>>>> HEAD@{1}
     return NextResponse.json({ 
       success: true,
       message: 'Profile notification updated' 

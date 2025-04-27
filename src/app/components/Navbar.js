@@ -244,11 +244,8 @@ export default function Navbar() {
                             </div>
                           </div>
                           <div className="mt-4 pt-3 border-t border-gray-100">
-<<<<<<< HEAD
-                            <Link href="/course" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700">
-=======
+                            {/* <Link href="/course" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700"> */}
                             <Link href="/courses" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700">
->>>>>>> HEAD@{1}
                               View all courses
                               <ChevronRight className="ml-1 h-3 w-3" />
                             </Link>
@@ -257,8 +254,6 @@ export default function Navbar() {
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
-<<<<<<< HEAD
-=======
               {/* Enhanced Courses Dropdown */}
 <NavigationMenuItem>
   <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
@@ -312,7 +307,6 @@ export default function Navbar() {
     </div>
   </NavigationMenuContent>
 </NavigationMenuItem>
->>>>>>> HEAD@{1}
 
                   {/* Enhanced Resources Dropdown */}
                   <NavigationMenuItem>

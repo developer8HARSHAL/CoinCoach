@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-<<<<<<< HEAD
 import CreditDebt from "./adultcourses/credit_debt_management/CreditDebt";
 import CreditDebt2 from "./adultcourses/credit_debt_management/CreditDebt2page";
 import CreditDebitCrossword from "./adultcourses/credit_debt_management/CreditDebitCrossword";
-=======
 import CreditDebt from "./Above18/credit_debt_management/CreditDebt";
 import CreditDebt2 from "./Above18/credit_debt_management/CreditDebt2page";
 import CreditDebitCrossword from "./Above18/credit_debt_management/CreditDebitCrossword";
->>>>>>> HEAD@{1}
 
 export default function CreditDebtModule() {
   const [currentModule, setCurrentModule] = useState("CreditDebt");
