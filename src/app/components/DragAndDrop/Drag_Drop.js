@@ -46,7 +46,7 @@ const Drag_Drop = () => {
                     width: '90%',
                     height: '90%',
                 }}>
-                    <h1>Drag and Drop Example</h1>
+                    <h1>Drag and Drop Game</h1>
                     <div style={{
                         display: 'flex',
                         justifyContent: 'space-around'
@@ -59,14 +59,14 @@ const Drag_Drop = () => {
                         }}>
                             <h2>Drag Items</h2>
                             <div className='flex justify-center w-[100%]'>
-                                <DragItem name="Item 1" />
-                                <DragItem name="Item 2" />
-                                <DragItem name="Item 3" />
+                                <DragItem name="Impulse Purchases" />
+                                <DragItem name="Emergency Fund" />
+                                <DragItem name="Credit Card Debt" />
                             </div>
                             <div className='flex justify-center w-[100%]'>
-                                <DragItem name="Item 1" />
-                                <DragItem name="Item 2" />
-                                <DragItem name="Item 3" />
+                                <DragItem name="Monthly Budget" />
+                                <DragItem name="Investing in Stocks" />
+                                <DragItem name="Dining out daily" />
                             </div>
                         </div>
 
@@ -78,7 +78,7 @@ const Drag_Drop = () => {
                             width: '40%',
                             height: '100%'
                         }}>
-                            <h2>Drop Zone 1</h2>
+                            <h2>Smart Financial Choices</h2>
                             <DropZone onDrop={(item) => handleDrop(item, 1)} />
                             {droppedItemsZone1.map((item, index) => (
                                 <div key={`zone1-${index}`}
@@ -106,7 +106,7 @@ const Drag_Drop = () => {
                             width: '40%',
                             height: '100%'
                         }}>
-                            <h2>Drop Zone 2</h2>
+                            <h2>Risky Financial Behaviour</h2>
                             <DropZone onDrop={(item) => handleDrop(item, 2)} />
                             {droppedItemsZone2.map((item, index) => (
                                 <div key={`zone2-${index}`}
@@ -133,7 +133,7 @@ const Drag_Drop = () => {
                             width: '40%',
                             height: '100%'
                         }}>
-                            <h2>Drop Zone 3</h2>
+                            <h2>Needs vs Wants</h2>
                             <DropZone onDrop={(item) => handleDrop(item, 3)} />
                             {droppedItemsZone3.map((item, index) => (
                                 <div key={`zone3-${index}`}

@@ -156,8 +156,8 @@ export default function Navbar() {
       description: "Comprehensive guides on crypto investment"
     },
     { 
-      title: "Financial Analysis", 
-      href: "/resources/financial-analysis",
+      title: "Bugdget Planner", 
+      href: "/budgetplanner",
       icon: <BarChart2 size={16} />,
       description: "In-depth analysis and market insights for smart investing"
     },
@@ -335,7 +335,7 @@ export default function Navbar() {
                           </div>
                         </div>
                         <div className="mt-4 pt-3 border-t border-gray-100">
-                          <Link href="/resources" className="text-sm font-medium text-yellow-600 flex items-center hover:text-yellow-700">
+                          <Link href="/budgetplanner" className="text-sm font-medium text-yellow-600 flex items-center hover:text-yellow-700">
                             Explore our complete resource library
                             <ChevronRight className="ml-1 h-4 w-4" />
                           </Link>
