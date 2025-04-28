@@ -1,9 +1,9 @@
+// src/app/components/budgetplanner/budgetForm.js
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
-import BudgetList from './budgetList';
 
 export default function BudgetForm({
   uid,
@@ -22,6 +22,7 @@ export default function BudgetForm({
   const [error, setError] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [temporaryIncome, setTemporaryIncome] = useState(income || '');
 
   // Set window size for confetti
   useEffect(() => {
@@ -39,12 +40,19 @@ export default function BudgetForm({
     }
   }, []);
 
+  // Set income card visibility based on income value
+  useEffect(() => {
+    if (income > 0) {
+      setShowIncomeCard(true);
+    }
+  }, [income]);
+
   // Load editing entry
   useEffect(() => {
     if (editingEntry) {
       setCategory(editingEntry.category);
-      setDescription(editingEntry.description);
-      setAmount(editingEntry.amount);
+      setDescription(editingEntry.description || '');
+      setAmount(editingEntry.amount.toString());
       setShowIncomeCard(true);
     }
   }, [editingEntry]);
@@ -60,7 +68,7 @@ export default function BudgetForm({
 
       allExpenses.forEach((exp) => {
         if (totals[exp.category] !== undefined) {
-          totals[exp.category] += exp.amount;
+          totals[exp.category] += Number(exp.amount);
         }
       });
 
@@ -80,10 +88,15 @@ export default function BudgetForm({
   }, [allExpenses, income]);
 
   const handleIncomeSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();  // Prevents immediate form submission when typing
     setError(null);
 
-    if (!uid || !income || isNaN(income) || Number(income) <= 0) {
+    if (!uid) {
+      setError('User authentication required');
+      return;
+    }
+
+    if (!temporaryIncome || isNaN(temporaryIncome) || Number(temporaryIncome) <= 0) {
       setError('Please enter a valid income');
       return;
     }
@@ -96,14 +109,16 @@ export default function BudgetForm({
         body: JSON.stringify({
           uid,
           operation: 'setIncome',
-          data: { income: Number(income) },
+          data: { income: Number(temporaryIncome) },
         }),
       });
+      
       const result = await res.json();
 
       if (!res.ok) throw new Error(result.error || 'Failed to save income');
-      setShowIncomeCard(true);
-      setShowSuccess(false);
+      
+      setIncome(temporaryIncome); // Update the actual income value only after successful submission
+      setShowIncomeCard(true);  // Show income card after submitting
     } catch (err) {
       setError(err.message);
     } finally {
@@ -114,8 +129,18 @@ export default function BudgetForm({
   const handleAddOrUpdate = async () => {
     setError(null);
 
-    if (!category || !amount || isNaN(amount) || Number(amount) <= 0 || !uid) {
-      setError('Please fill in all fields correctly');
+    if (!uid) {
+      setError('User authentication required');
+      return;
+    }
+
+    if (!category) {
+      setError('Please select a category');
+      return;
+    }
+
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      setError('Please enter a valid amount');
       return;
     }
 
@@ -125,7 +150,6 @@ export default function BudgetForm({
         category,
         description: description || `${category} Expense`,
         amount: Number(amount),
-        type: 'Expense',
         date: new Date().toISOString(),
         ...(editingEntry && { _id: editingEntry._id }),
       };
@@ -148,56 +172,26 @@ export default function BudgetForm({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to save expense');
 
-      // Proper state management for both add and update operations
-      if (editingEntry) {
-        // For updates, replace the existing entry
-        const updatedExpenses = allExpenses.map(entry => 
-          entry._id === editingEntry._id ? result.data.expense : entry
+      // Update expenses in parent component
+      if (operation === 'updateExpense') {
+        const updatedExpenses = allExpenses.map(exp => 
+          exp._id === editingEntry._id ? result.data.expense : exp
         );
         addEntry(updatedExpenses);
       } else {
-        // For new entries, add to the existing array
-        addEntry([...allExpenses, result.data.expense]);
+        // For new entries
+        if (result.data.expenses) {
+          addEntry(result.data.expenses);
+        } else if (result.data.expense) {
+          addEntry([...allExpenses, result.data.expense]);
+        }
       }
 
       // Reset form fields
-      if (!editingEntry) {
-        setCategory('');
-        setDescription('');
-        setAmount('');
-      } else {
-        setEditingEntry(null);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEditEntry = (entry) => {
-    setEditingEntry(entry);
-    setShowIncomeCard(true);
-  };
-
-  const handleDeleteEntry = async (entryId) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/budgetOperation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          uid,
-          operation: 'deleteExpense',
-          data: { expenseId: entryId },
-        }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to delete expense');
-
-      const updatedExpenses = allExpenses.filter(entry => entry._id !== entryId);
-      addEntry(updatedExpenses);
+      setCategory('');
+      setDescription('');
+      setAmount('');
+      setEditingEntry(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -243,25 +237,25 @@ export default function BudgetForm({
         )}
 
         {!showIncomeCard ? (
-          <form onSubmit={handleIncomeSubmit} className="flex gap-3 items-center">
-            <input
-              type="number"
-              placeholder="Enter Monthly Income"
-              className="flex-1 border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/80 shadow-inner transition"
-              value={income}
-              onChange={(e) => setIncome(e.target.value)}
-              required
-              min="0"
-              step="0.01"
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-lg font-semibold hover:scale-105 transition-transform ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isLoading ? 'Saving...' : 'Submit'}
-            </button>
-          </form>
+         <form onSubmit={handleIncomeSubmit} className="flex gap-3 items-center">
+           <input
+             type="number"
+             placeholder="Enter Monthly Income"
+             className="flex-1 border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white/80 shadow-inner transition"
+             value={temporaryIncome}
+             onChange={(e) => setTemporaryIncome(e.target.value)}
+             required
+             min="0"
+             step="1000"
+           />
+           <button
+             type="submit"
+             disabled={isLoading}
+             className={`bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-lg font-semibold hover:scale-105 transition-transform ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+           >
+             {isLoading ? 'Saving...' : 'Submit'}
+           </button>
+         </form>
         ) : (
           <>
             <motion.div
@@ -269,7 +263,7 @@ export default function BudgetForm({
               animate={{ opacity: 1, y: 0 }}
               className="bg-green-100 text-green-800 p-5 rounded-xl text-center shadow-lg text-2xl font-semibold"
             >
-              Your Monthly Income: ₹{income.toLocaleString()}
+              Your Monthly Income: ₹{Number(income).toLocaleString()}
             </motion.div>
 
             <div className="space-y-5">
@@ -329,18 +323,6 @@ export default function BudgetForm({
           </>
         )}
       </motion.div>
-
-      {/* Budget List Section */}
-      {showIncomeCard && (
-        <div className="w-full max-w-6xl mx-auto">
-          <BudgetList
-            entries={allExpenses}
-            income={income}
-            onEdit={handleEditEntry}
-            onDelete={handleDeleteEntry}
-          />
-        </div>
-      )}
     </div>
   );
 }

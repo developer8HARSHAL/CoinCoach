@@ -1,297 +1,209 @@
+// src/app/components/budgetplanner/budgetList.js
 'use client';
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, PencilLine, BadgeIndianRupee, AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Doughnut } from 'react-chartjs-2';
 import {
-  PieChart,
-  Pie,
-  Cell,
+  Chart as ChartJS,
+  ArcElement,
   Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   Legend,
-} from 'recharts';
+  CategoryScale,
+  LinearScale,
+} from 'chart.js';
+import { PencilIcon, TrashIcon } from '@heroicons/react/outline'; 
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
 
 export default function BudgetList({ entries, income, onEdit, onDelete }) {
-  // Calculate totals and grouped entries
-  const calculateTotals = () => {
-    const totals = { Needs: 0, Wants: 0, Savings: 0 };
-    const grouped = { Needs: [], Wants: [], Savings: [] };
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [{ data: [], backgroundColor: [] }],
+  });
+  const [categorySummary, setCategorySummary] = useState({});
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Chart colors
+  const categoryColors = {
+    Needs: 'rgba(255, 99, 132, 0.7)',
+    Wants: 'rgba(54, 162, 235, 0.7)',
+    Savings: 'rgba(255, 206, 86, 0.7)',
+    Income: 'rgba(75, 192, 192, 0.7)',
+  };
+
+  // Calculate spending by category
+  useEffect(() => {
+    if (!entries || entries.length === 0) return;
+
+    // Group expenses by category
+    const categories = {};
+    let totalSpent = 0;
 
     entries.forEach((entry) => {
-      if (grouped[entry.category]) {
-        grouped[entry.category].push(entry);
-        totals[entry.category] += entry.amount;
+      const category = entry.category;
+      const amount = Number(entry.amount);
+      
+      if (!categories[category]) {
+        categories[category] = 0;
       }
+      
+      categories[category] += amount;
+      totalSpent += amount;
     });
 
-    return { totals, grouped };
-  };
-
-  const { totals: categoryTotals, grouped: groupedEntries } = calculateTotals();
-  const totalSpent = categoryTotals.Needs + categoryTotals.Wants + categoryTotals.Savings;
-  const remaining = income - totalSpent;
-
-  // Calculate recommended amounts
-  const recommended = {
-    needs: income * 0.5,
-    wants: income * 0.3,
-    savings: income * 0.2
-  };
-
-  // Calculate percentages
-  const actualPercentages = {
-    needs: (categoryTotals.Needs / income) * 100,
-    wants: (categoryTotals.Wants / income) * 100,
-    savings: (categoryTotals.Savings / income) * 100
-  };
-
-  // Generate suggestions
-  const getSuggestions = () => {
-    const suggestions = [];
+    // Calculate percentages and remaining income
+    const remaining = Math.max(0, income - totalSpent);
     
-    if (categoryTotals.Needs > recommended.needs) {
-      const overspend = categoryTotals.Needs - recommended.needs;
-      suggestions.push({
-        type: 'needs',
-        message: `Reduce Needs by ₹${overspend.toLocaleString()}`,
-        action: 'Try negotiating rent or cutting utility costs'
-      });
+    // Prepare chart data
+    const labels = [...Object.keys(categories), 'Remaining'];
+    const data = [...Object.values(categories), remaining];
+    const backgroundColors = labels.map(
+      label => categoryColors[label] || 'rgba(153, 102, 255, 0.7)'
+    );
+
+    setChartData({
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: backgroundColors,
+          borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+          borderWidth: 1,
+        },
+      ],
+    });
+
+    // Set category summary with percentages
+    const summary = {};
+    for (const [category, amount] of Object.entries(categories)) {
+      const percentage = income > 0 ? ((amount / income) * 100).toFixed(1) : 0;
+      summary[category] = {
+        amount,
+        percentage: Number(percentage),
+      };
     }
 
-    if (categoryTotals.Wants > recommended.wants) {
-      const overspend = categoryTotals.Wants - recommended.wants;
-      suggestions.push({
-        type: 'wants',
-        message: `Reduce Wants by ₹${overspend.toLocaleString()}`,
-        action: 'Delay non-essential purchases this month'
-      });
-    }
+    // Add remaining amount
+    summary.Remaining = {
+      amount: remaining,
+      percentage: income > 0 ? ((remaining / income) * 100).toFixed(1) : 0,
+    };
 
-    if (categoryTotals.Savings < recommended.savings) {
-      const shortfall = recommended.savings - categoryTotals.Savings;
-      suggestions.push({
-        type: 'savings',
-        message: `Increase Savings by ₹${shortfall.toLocaleString()}`,
-        action: 'Automate transfers to savings on payday'
-      });
-    }
+    setCategorySummary(summary);
+  }, [entries, income]);
 
-    return suggestions;
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
   };
 
-  const suggestions = getSuggestions();
-
-  const renderEntry = (entry, idx) => (
-    <motion.li
-      key={entry._id || `${entry.category}-${idx}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="flex justify-between items-center border-b py-1 group"
-    >
-      <div className="flex items-center gap-2">
-        <BadgeIndianRupee className="w-4 h-4 text-gray-600" />
-        <span className="text-sm">{entry.description || `Entry ${idx + 1}`}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="font-medium text-sm">₹{entry.amount}</span>
-        
-        {['Needs', 'Wants', 'Savings'].includes(entry.category) && (
-          <>
-            <button
-              className="text-blue-500 opacity-0 group-hover:opacity-100 transition"
-              onClick={() => onEdit(entry)}
-            >
-              <PencilLine className="w-4 h-4" />
-            </button>
-            <button
-              className="text-red-500 opacity-0 group-hover:opacity-100 transition"
-              onClick={() => {
-                if (confirm('Are you sure you want to delete this entry?')) {
-                  onDelete(entry._id);
-                }
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </>
-        )}
-      </div>
-    </motion.li>
-  );
-
-  const CategoryCard = ({ title, color, entries }) => (
-    <div className="h-full">
-      <h4 className={`text-${color}-600 font-semibold text-lg mb-2 text-center`}>{title}</h4>
-      <ul className={`space-y-1 bg-${color}-50 rounded-lg p-3 h-full min-h-[200px]`}>
-        <AnimatePresence>
-          {entries.length > 0 ? (
-            entries.map((entry, idx) => renderEntry(entry, idx))
-           ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center text-gray-500 py-4"
-              >
-                No {title.toLowerCase()} expenses yet
-              </motion.div>
-            )
-          }
-        </AnimatePresence>
-      </ul>
-    </div>
-  );
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const percentage = income > 0 ? ((value / income) * 100).toFixed(1) : 0;
+            return `${label}: $${value} (${percentage}%)`;
+          },
+        },
+      },
+    },
+  };
 
   return (
-    <div className="max-w-5xl mx-auto mt-8 bg-white shadow-lg rounded-2xl p-6">
-      <h3 className="text-2xl font-bold text-orange-600 flex items-center justify-center gap-2 mb-6">
-        📊 Budget Summary
-      </h3>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-        <CategoryCard title="Needs" color="blue" entries={groupedEntries.Needs} />
-        <CategoryCard title="Wants" color="pink" entries={groupedEntries.Wants} />
-        <CategoryCard title="Savings" color="green" entries={groupedEntries.Savings} />
-      </div>
-
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Enhanced Pie Chart with 50/30/20 Analysis */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4 text-center">Budget Distribution (50/30/20 Rule)</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Needs', value: categoryTotals.Needs },
-                    { name: 'Wants', value: categoryTotals.Wants },
-                    { name: 'Savings', value: categoryTotals.Savings },
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
-                >
-                  <Cell fill="#3b82f6" />
-                  <Cell fill="#ec4899" />
-                  <Cell fill="#10b981" />
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => [`₹${value.toLocaleString()}`, 'Amount']}
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    padding: '0.5rem'
-                  }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Budget Rule Analysis */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-4">Rule Compliance</h4>
-            
-            {/* Progress Bars */}
-            <div className="space-y-4">
-              {['needs', 'wants', 'savings'].map((type) => (
-                <div key={type}>
-                  <div className="flex justify-between mb-1">
-                    <span className="font-medium capitalize">
-                      {type} ({type === 'needs' ? '50%' : type === 'wants' ? '30%' : '20%'})
-                    </span>
-                    <span className="font-medium">
-                      {actualPercentages[type].toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className={`h-2.5 rounded-full ${
-                        type === 'needs' ? 'bg-blue-500' : 
-                        type === 'wants' ? 'bg-pink-500' : 'bg-green-500'
-                      }`} 
-                      style={{
-                        width: `${Math.min(100, actualPercentages[type])}%`
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Suggestions */}
-            {suggestions.length > 0 && (
-              <div className="mt-6 space-y-3">
-                <h4 className="font-semibold text-red-600 flex items-center gap-2">
-                  <AlertTriangle size={18} />
-                  Budget Adjustments Needed
-                </h4>
-                {suggestions.map((suggestion, index) => (
-                  <div key={index} className="p-3 bg-red-50 rounded-lg">
-                    <div className="flex items-center gap-2 font-medium">
-                      {suggestion.type === 'savings' ? (
-                        <ArrowUp size={16} className="text-green-600" />
-                      ) : (
-                        <ArrowDown size={16} className="text-red-600" />
-                      )}
-                      {suggestion.message}
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{suggestion.action}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <h2 className="text-xl font-semibold mb-4">Budget Overview</h2>
+      
+      {/* Chart and Summary Section */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Chart */}
+        <div className="h-64">
+          {chartData.labels.length > 0 && (
+            <Doughnut data={chartData} options={chartOptions} />
+          )}
         </div>
 
-        {/* Bar Chart */}
-        <div className="w-full h-full">
-          <h4 className="text-center font-semibold text-lg mb-2">Income vs Spending</h4>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={[
-                  { name: 'Income', amount: income },
-                  { name: 'Spent', amount: totalSpent },
-                  { name: 'Remaining', amount: remaining },
-                ]}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fill: '#6b7280' }}
-                />
-                <YAxis 
-                  tick={{ fill: '#6b7280' }}
-                  tickFormatter={(value) => `₹${value.toLocaleString()}`}
-                />
-                <Tooltip 
-                  formatter={(value) => [`₹${value.toLocaleString()}`, 'Amount']}
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    padding: '0.5rem'
-                  }}
-                />
-                <Legend />
-                <Bar 
-                  dataKey="amount" 
-                  fill="#f97316" 
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Summary */}
+        <div>
+          <h3 className="text-lg font-medium mb-2">Category Summary</h3>
+          <div className="space-y-2">
+            {Object.entries(categorySummary).map(([category, data]) => (
+              <div key={category} className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div
+                    className="w-3 h-3 rounded-full mr-2"
+                    style={{
+                      backgroundColor: categoryColors[category] || 'rgba(153, 102, 255, 0.7)',
+                    }}
+                  ></div>
+                  <span>{category}</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-medium">₹{data.amount.toFixed(2)}</span>
+                  <span className="text-gray-500 text-sm ml-1">({data.percentage}%)</span>
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+      </div>
+
+      {/* Expenses List Section */}
+      <div className="mt-6">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-medium">Expenses Detail</h3>
+          <button
+            onClick={toggleExpand}
+            className="text-blue-500 text-sm hover:underline focus:outline-none"
+          >
+            {isExpanded ? 'Collapse' : 'Expand All'}
+          </button>
+        </div>
+
+        <div className={`transition-all duration-300 ${isExpanded ? 'max-h-full' : 'max-h-64 overflow-y-auto'}`}>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b">
+                <th className="py-2 text-left">Category</th>
+                <th className="py-2 text-right">Amount</th>
+                <th className="py-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry._id} className="border-b hover:bg-gray-50">
+                  <td className="py-2">{entry.category}</td>
+                  <td className="py-2 text-right">₹{Number(entry.amount).toFixed(2)}</td>
+                  <td className="py-2 text-right">
+
+<button
+  onClick={() => onEdit(entry)}
+  className="text-blue-500 hover:text-blue-700 mr-2 focus:outline-none"
+  aria-label="Edit"
+>
+  <PencilIcon className="w-5 h-5" /> {/* Edit Icon */}
+</button>
+<button
+  onClick={() => onDelete(entry._id)}
+  className="text-red-500 hover:text-red-700 focus:outline-none"
+  aria-label="Delete"
+>
+  <TrashIcon className="w-5 h-5" /> {/* Delete Icon */}
+</button>
+
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

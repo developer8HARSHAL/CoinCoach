@@ -1,3 +1,5 @@
+// This would be the component that lists all available courses
+// /src/app/courses/page.js
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -12,7 +14,7 @@ export default function CoursesPage() {
       id: 'money-basics',
       title: 'Money Basics',
       description: 'Learn about the time value of money and inflation impact.',
-      image: '/path/to/image.jpg'
+      image: '/images/ymoney.jpg'
     },
     {
       id: 'financial-concepts',

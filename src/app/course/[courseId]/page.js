@@ -81,10 +81,118 @@ const courseModules = {
   }
 };
 
+// Custom hook for module progress tracking
+function useModuleProgressTracking(courseId, totalModules) {
+  const [currentModule, setCurrentModule] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  // Fetch progress when component mounts
+  useEffect(() => {
+    if (user && courseId) {
+      fetchProgress();
+    } else if (!user) {
+      setIsLoading(false);
+    }
+  }, [user, courseId]);
+
+  // Fetch user's progress from API
+  const fetchProgress = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/progress?uid=${user.uid}`);
+      const data = await response.json();
+      
+      if (data.modules && data.modules[courseId]) {
+        const courseProgress = data.modules[courseId];
+        setProgress(courseProgress.progress || 0);
+        
+        // Set the starting module based on previous progress
+        if (courseProgress.completedSections) {
+          const moduleToStart = Math.min(
+            courseProgress.completedSections, 
+            totalModules - 1
+          );
+          setCurrentModule(moduleToStart);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching progress:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Save progress for a specific module
+  const saveProgress = async (moduleIndex, isComplete = false) => {
+    if (!user) return false;
+    
+    // Calculate progress based on modules completed
+    const completedSections = moduleIndex + 1;
+    // If marking course as complete, set to 100%, otherwise calculate
+    const newProgress = isComplete ? 100 : Math.round((completedSections / totalModules) * 100);
+    
+    try {
+      // Update local state
+      setProgress(newProgress);
+      
+      // Save to backend
+      const response = await fetch('/api/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: user.uid,
+          moduleId: courseId,
+          moduleName: courseId,
+          completedSections: isComplete ? totalModules : completedSections,
+          totalSections: totalModules,
+          progress: newProgress,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save progress');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving progress:", error);
+      return false;
+    }
+  };
+
+  // Mark a module as complete
+  const markModuleComplete = async (moduleIndex) => {
+    return await saveProgress(moduleIndex);
+  };
+  
+  // Mark the entire course as complete
+  const markCourseComplete = async () => {
+    return await saveProgress(totalModules - 1, true);
+  };
+
+  return {
+    currentModule,
+    setCurrentModule,
+    progress,
+    markModuleComplete,
+    markCourseComplete,
+    isLoading,
+  };
+}
+
 // Component for Module Content
-function ModuleContent({ module, onNext, onPrev, isLastModule, courseId, moduleIndex, totalModules }) {
+function ModuleContent({ module, onNext, onPrev, isLastModule, courseId, moduleIndex, totalModules, onComplete }) {
   const ModuleComponent = module.component;
   const router = useRouter();
+  
+  const handleLastModule = async () => {
+    await onComplete();
+    router.push("/course");
+  };
   
   return (
     <div className="rounded-xl">
@@ -108,10 +216,10 @@ function ModuleContent({ module, onNext, onPrev, isLastModule, courseId, moduleI
           
           {isLastModule ? (
             <button
-              onClick={() => router.push("/course")}
+              onClick={handleLastModule}
               className="flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              Back to Courses
+              Complete Course and Return <FaCheckCircle className="ml-2" />
             </button>
           ) : (
             <button
@@ -168,14 +276,15 @@ export default function CoursePage() {
     }
   }, [courseData, router]);
   
-  // Use the hook to track progress
+  // Use our custom hook for progress tracking
   const { 
     currentModule, 
     setCurrentModule, 
     progress, 
     markModuleComplete, 
+    markCourseComplete,
     isLoading 
-  } = useModuleProgress(courseId, courseData?.modules?.length || 0);
+  } = useModuleProgressTracking(courseId, courseData?.modules?.length || 0);
   
   // Handle user not logged in
   if (!user && !isLoading) {
@@ -205,21 +314,35 @@ export default function CoursePage() {
   }
   
   // Handle next button click
-  const handleNext = () => {
-    // Mark current module as complete
-    markModuleComplete(currentModule);
-    
-    // Move to next module if not at the end
-    if (currentModule < courseData.modules.length - 1) {
-      setCurrentModule(currentModule + 1);
+  const handleNext = async () => {
+    try {
+      // Mark current module as complete
+      await markModuleComplete(currentModule);
+      
+      // Move to next module if not at the end
+      if (currentModule < courseData.modules.length - 1) {
+        setCurrentModule(currentModule + 1);
+      }
+    } catch (error) {
+      console.error("Error handling next:", error);
     }
   };
   
   // Handle previous button click
   const handlePrev = () => {
-    // Move to previous module if not at the beginning
     if (currentModule > 0) {
       setCurrentModule(currentModule - 1);
+    }
+  };
+  
+  // Handle complete course button click (last module)
+  const handleComplete = async () => {
+    try {
+      // Mark the entire course as complete (100%)
+      await markCourseComplete();
+      // Router will navigate to /course page from the ModuleContent component
+    } catch (error) {
+      console.error("Error completing course:", error);
     }
   };
   
@@ -278,6 +401,7 @@ export default function CoursePage() {
                 courseId={courseId}
                 moduleIndex={currentModule}
                 totalModules={courseData.modules.length}
+                onComplete={handleComplete}
               />
             )
           )}
