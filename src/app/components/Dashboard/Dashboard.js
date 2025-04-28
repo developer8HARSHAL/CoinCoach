@@ -1,8 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, User, BarChart2, PieChart, Award, Gamepad2, BookOpen, Target, Activity, ArrowRight, ArrowLeft, Bookmark, CheckCircle2, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,28 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Add this near the top of your Dashboard component
-useEffect(() => {
-  const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
-  console.log("📌 Dashboard mounted, UID from storage:", uid);
-  
-  fetchProgress();
-  
-  // Set up event listener for custom progress update event
-  const handleProgressUpdate = () => {
-    console.log("🔄 Progress update event received!");
-    fetchProgress();
-  };
-  
-  window.addEventListener('progressUpdated', handleProgressUpdate);
-  
-  // Clean up event listener when component unmounts
-  return () => {
-    window.removeEventListener('progressUpdated', handleProgressUpdate);
-  };
-}, []);
-
-// Update the ModuleProgressCard component to ensure it works with your progress data
+// ModuleProgressCard component - moved inside Dashboard before it's used
 const ModuleProgressCard = ({ module, position }) => {
   const bgColors = [
     "bg-gradient-to-br from-blue-500 to-purple-600",
@@ -190,27 +167,26 @@ const Dashboard = () => {
     }
   };
 
-// Make sure your useEffect includes the current user's UID
-// Replace your existing useEffect with this corrected version
-useEffect(() => {
-  const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
-  console.log("📌 Dashboard mounted, UID from storage:", uid);
-  
-  fetchProgress();
-  
-  // Set up event listener for custom progress update event
-  const handleProgressUpdate = () => {
-    console.log("🔄 Progress update event received!");
+  // useEffect for progress data
+  useEffect(() => {
+    const uid = localStorage.getItem('uid') || sessionStorage.getItem('uid');
+    console.log("📌 Dashboard mounted, UID from storage:", uid);
+    
     fetchProgress();
-  };
-  
-  window.addEventListener('progressUpdated', handleProgressUpdate);
-  
-  // Clean up event listener when component unmounts
-  return () => {
-    window.removeEventListener('progressUpdated', handleProgressUpdate);
-  };
-}, []);
+    
+    // Set up event listener for custom progress update event
+    const handleProgressUpdate = () => {
+      console.log("🔄 Progress update event received!");
+      fetchProgress();
+    };
+    
+    window.addEventListener('progressUpdated', handleProgressUpdate);
+    
+    // Clean up event listener when component unmounts
+    return () => {
+      window.removeEventListener('progressUpdated', handleProgressUpdate);
+    };
+  }, []);
 
   // Fetch game history data from MongoDB
   useEffect(() => {
@@ -400,39 +376,40 @@ useEffect(() => {
       }
     });
   }
+
+  // Filter modules based on category
+  const getFilteredModules = () => {
+    console.log("🔍 Getting filtered modules from:", moduleProgress);
+    
+    if (!moduleProgress) {
+      console.log("⚠️ No module progress data available");
+      return [];
+    }
+    
+    const modules = Object.keys(moduleProgress).map(key => {
+      return {
+        id: key,
+        title: moduleProgress[key].moduleName || key,
+        description: `Complete ${moduleProgress[key].completedSections} of ${moduleProgress[key].totalSections} sections`,
+        progress: moduleProgress[key].progress || 0,
+        totalLessons: moduleProgress[key].totalSections || 0,
+        completedLessons: moduleProgress[key].completedSections || 0,
+        ...moduleProgress[key]
+      };
+    });
+    
+    console.log("📊 Processed modules:", modules);
+    
+    // Apply category filtering if selected
+    if (selectedCategory === 'all') return modules;
+    return modules.filter(module => module.category === selectedCategory);
+  };
+
   const categoryFilteredModules = getFilteredModules();
- // Add this console log right before rendering the filtered modules
-console.log("🎨 Selected category:", selectedCategory);
-console.log("🎨 Category filtered modules:", categoryFilteredModules);
-
-// Replace the existing module filtering code in Dashboard.js
-const getFilteredModules = () => {
-  console.log("🔍 Getting filtered modules from:", moduleProgress);
   
-  if (!moduleProgress) {
-    console.log("⚠️ No module progress data available");
-    return [];
-  }
-  
-  const modules = Object.keys(moduleProgress).map(key => {
-    return {
-      id: key,
-      title: moduleProgress[key].moduleName || key,
-      description: `Complete ${moduleProgress[key].completedSections} of ${moduleProgress[key].totalSections} sections`,
-      progress: moduleProgress[key].progress || 0,
-      totalLessons: moduleProgress[key].totalSections || 0,
-      completedLessons: moduleProgress[key].completedSections || 0,
-      ...moduleProgress[key]
-    };
-  });
-  
-  console.log("📊 Processed modules:", modules);
-  
-  // Apply category filtering if selected
-  if (selectedCategory === 'all') return modules;
-  return modules.filter(module => module.category === selectedCategory);
-};
-
+  // Add this console log right before rendering the filtered modules
+  console.log("🎨 Selected category:", selectedCategory);
+  console.log("🎨 Category filtered modules:", categoryFilteredModules);
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -483,20 +460,6 @@ const getFilteredModules = () => {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {getFilteredModules().length > 0 ? (
-    getFilteredModules().map((module, index) => (
-      <ModuleProgressCard key={module.id} module={module} position={index} />
-    ))
-  ) : (
-    <div className="col-span-full bg-white p-8 rounded-lg text-center">
-      <h3 className="text-lg font-medium mb-2">No modules found</h3>
-      <p className="text-gray-500">
-        You haven't started any learning modules yet.
-      </p>
-    </div>
-  )}
-</div>
                   <Card className="bg-white/10 border-none shadow-none">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-medium mb-2">Learning Progress</h3>
@@ -700,113 +663,315 @@ const getFilteredModules = () => {
                         {/* Game Performance Chart - only render if we have data */}
                         {gameScoreData.length > 0 && (
                           <div className="mt-6">
-                            <h3 className="text-sm font-medium text-gray-700 mb-4">Recent Game Performance</h3>
-                            <div className="h-52">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                  data={gameScoreData}
-                                  margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-                                >
-                                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                  <XAxis dataKey="game" />
-                                  <YAxis />
-                                  <Tooltip formatter={(value, name, props) => {
-                                    return [`Score: ${value}`, `${props.payload.type}`];
-                                  }} />
-                                  <Bar dataKey="score" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                  // Continuing from the BarChart in the game performance section
-                                </BarChart>
-                              </ResponsiveContainer>
-                            </div>
+                          <h3 className="text-sm font-medium text-gray-700 mb-4">Game Performance</h3>
+                          <div className="h-52">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                data={gameScoreData}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="game" />
+                                <YAxis />
+                                <Tooltip formatter={(value) => [`${value} points`, 'Score']} />
+                                <Bar dataKey="score" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
                           </div>
-                        )}
-                      </>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="quiz" className="mt-0">
-                    <h3 className="text-sm font-medium text-gray-700 mb-4">Quiz Performance</h3>
-                    <div className="h-52">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={safeUserData.analytics.quizScores}
-                          margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="quiz" />
-                          <YAxis domain={[0, 100]} unit="%" />
-                          <Tooltip formatter={(value) => [`${value}%`, 'Score']} />
-                          <Bar dataKey="score" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </TabsContent>
-                </CardContent>
-              </Card>
-            </Tabs>
-          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="quiz" className="mt-0">
+                  <h3 className="text-sm font-medium text-gray-700 mb-4">Quiz Performance</h3>
+                  <div className="h-52">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={safeUserData.analytics.quizScores}
+                        margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="quiz" />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip formatter={(value) => [`${value}%`, 'Score']} />
+                        <Bar dataKey="score" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </TabsContent>
+              </CardContent>
+            </Card>
+          </Tabs>
         </div>
+      </div>
 
-        {/* Learning Modules Section */}
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Learning Modules</h2>
+      {/* Modules Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Learning Modules</CardTitle>
             <div className="flex space-x-2">
-              {moduleCategories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </Button>
-              ))}
+              <div className="flex bg-blue-50 rounded-md overflow-hidden">
+                {moduleCategories.map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "ghost"}
+                    className={`text-sm py-1 px-3 h-9 ${
+                      selectedCategory === category 
+                        ? "bg-blue-600" 
+                        : "text-gray-600 hover:bg-blue-100"
+                    }`}
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
-
-          {categoryFilteredModules.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoryFilteredModules.map((module, i) => (
-                <ModuleProgressCard
-                  key={module.id}
-                  module={{
-                    title: module.moduleName || `Module ${i + 1}`,
-                    description: module.description || "Learn essential skills and concepts in this comprehensive module.",
-                    progress: module.progress || 0,
-                    totalLessons: module.totalLessons || 5,
-                    completedLessons: module.completedLessons || 0,
-                    lastAccessed: module.lastAccessed,
-                    estimatedTime: module.estimatedTime || "1h 30m",
-                    imageUrl: module.imageUrl
-                  }}
-                  position={i}
+        </CardHeader>
+        <CardContent>
+          {!moduleProgress || Object.keys(moduleProgress).length === 0 ? (
+            <div className="text-center p-12 bg-gray-50 rounded-md">
+              <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">No Modules Found</h3>
+              <p className="text-gray-500 max-w-md mx-auto mb-6">
+                You don't have any learning modules yet. Get started by exploring our curriculum or recommended paths.
+              </p>
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push('/modules')}>
+                Explore Modules
+              </Button>
+            </div>
+          ) : categoryFilteredModules.length === 0 ? (
+            <div className="text-center p-12 bg-gray-50 rounded-md">
+              <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">No Modules in This Category</h3>
+              <p className="text-gray-500 max-w-md mx-auto mb-6">
+                There are no modules available in the "{selectedCategory}" category. Try another category or explore all modules.
+              </p>
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setSelectedCategory('all')}>
+                Show All Modules
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categoryFilteredModules.map((module, index) => (
+                <ModuleProgressCard 
+                  key={module.id} 
+                  module={module} 
+                  position={index} 
                 />
               ))}
             </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <CardTitle className="mb-2">No modules found</CardTitle>
-              <CardDescription>
-                {selectedCategory !== 'all' 
-                  ? `No modules found in the ${selectedCategory} category. Try selecting a different category.`
-                  : `No learning modules available yet. Check back soon for new content!`}
-              </CardDescription>
-              {selectedCategory !== 'all' && (
-                <Button className="mt-4" variant="outline" onClick={() => setSelectedCategory('all')}>
-                  View All Modules
-                </Button>
-              )}
-            </Card>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        
-              
+      {/* Activity Log Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Activity Log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="space-y-4">
+                {safeUserData.activityLog.slice(0, 5).map((log) => (
+                  <Button
+                    key={log.date}
+                    variant="ghost"
+                    className={`w-full justify-start px-4 py-3 h-auto ${
+                      log.date === selectedDate ? 'bg-blue-100 text-blue-800' : 'text-gray-700'
+                    }`}
+                    onClick={() => setSelectedDate(log.date)}
+                  >
+                    <Calendar className="h-5 w-5 mr-3" />
+                    <div className="text-left">
+                      <div className="font-medium">{log.date}</div>
+                      <div className="text-sm text-gray-600">{log.activities.length} activities</div>
+                    </div>
+                  </Button>
+                ))}
+                
+                {safeUserData.activityLog.length === 0 && (
+                  <div className="bg-gray-50 rounded-md p-8 text-center">
+                    <Calendar className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-500">No activity logged yet.</p>
+                    <p className="text-gray-400 text-sm">Start learning to see your activities here.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div>
+              <Card className="bg-gray-50 border border-gray-100">
+                <CardHeader className="py-3 px-4 border-b border-gray-100">
+                  <CardTitle className="text-lg">
+                    Activities on {selectedDate || "Selected Date"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="py-4 px-4">
+                  <ul className="space-y-3">
+                    {getActivitiesForDate(selectedDate).map((activity, index) => (
+                      <li key={index} className="bg-white p-3 rounded-md shadow-sm">
+                        <div className="flex items-start">
+                          <div className="h-8 w-8 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                            <Activity className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-gray-700">{activity}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {/* Use fake timestamps since we don't have real ones */}
+                              {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </p>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recommendations Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Personalized Recommendations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="border border-gray-200 overflow-hidden">
+              <div className="h-32 bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center">
+                <Target className="h-12 w-12 text-white" />
+              </div>
+              <CardContent className="p-4">
+                <h3 className="font-bold text-lg mb-2">Next Steps</h3>
+                <p className="text-gray-600 mb-4 text-sm">Based on your progress, here's what we recommend to focus on next.</p>
+                <ul className="space-y-2">
+                  <li className="flex items-center text-sm">
+                    <CheckCircle2 className="text-green-500 mr-2 h-4 w-4" />
+                    <span>Complete your first module</span>
+                  </li>
+                  <li className="flex items-center text-sm">
+                    <CheckCircle2 className="text-gray-300 mr-2 h-4 w-4" />
+                    <span>Try at least one game</span>
+                  </li>
+                  <li className="flex items-center text-sm">
+                    <CheckCircle2 className="text-gray-300 mr-2 h-4 w-4" />
+                    <span>Take a quiz to test your knowledge</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter className="bg-gray-50 px-4 py-3 border-t">
+                <Button variant="ghost" className="w-full text-blue-700 justify-center">
+                  View Details
+                </Button>
+              </CardFooter>
+            </Card>
+
+            <Card className="border border-gray-200 overflow-hidden">
+              <div className="h-32 bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center">
+                <BookOpen className="h-12 w-12 text-white" />
+              </div>
+              <CardContent className="p-4">
+                <h3 className="font-bold text-lg mb-2">Suggested Resources</h3>
+                <p className="text-gray-600 mb-4 text-sm">Learn more about financial literacy with these resources.</p>
+                <ul className="space-y-3">
+                  <li className="text-sm">
+                    <a href="#" className="text-blue-600 hover:underline">Budgeting Basics Guide</a>
+                    <p className="text-gray-500 text-xs mt-1">5 min read</p>
+                  </li>
+                  <li className="text-sm">
+                    <a href="#" className="text-blue-600 hover:underline">Introduction to Investing</a>
+                    <p className="text-gray-500 text-xs mt-1">10 min read</p>
+                  </li>
+                  <li className="text-sm">
+                    <a href="#" className="text-blue-600 hover:underline">Understanding Credit Scores</a>
+                    <p className="text-gray-500 text-xs mt-1">7 min read</p>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter className="bg-gray-50 px-4 py-3 border-t">
+                <Button variant="ghost" className="w-full text-blue-700 justify-center">
+                  View All Resources
+                </Button>
+              </CardFooter>
+            </Card>
+
+            <Card className="border border-gray-200 overflow-hidden">
+              <div className="h-32 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
+                <Gamepad2 className="h-12 w-12 text-white" />
+              </div>
+              <CardContent className="p-4">
+                <h3 className="font-bold text-lg mb-2">Learning Games</h3>
+                <p className="text-gray-600 mb-4 text-sm">Practice your skills with these interactive games.</p>
+                <ul className="space-y-3">
+                  <li className="bg-purple-50 rounded p-2">
+                    <a href="#" className="flex items-center">
+                      <div className="h-8 w-8 bg-purple-200 rounded flex items-center justify-center mr-3">
+                        <Gamepad2 className="h-4 w-4 text-purple-700" />
+                      </div>
+                      <div className="flex-grow">
+                        <div className="font-medium text-sm">Budget Battle</div>
+                        <div className="text-xs text-gray-500">Test your budgeting skills</div>
+                      </div>
+                      <div className="text-purple-700">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </a>
+                  </li>
+                  <li className="bg-indigo-50 rounded p-2">
+                    <a href="#" className="flex items-center">
+                      <div className="h-8 w-8 bg-indigo-200 rounded flex items-center justify-center mr-3">
+                        <PieChart className="h-4 w-4 text-indigo-700" />
+                      </div>
+                      <div className="flex-grow">
+                        <div className="font-medium text-sm">Stock Market Sim</div>
+                        <div className="text-xs text-gray-500">Learn investment basics</div>
+                      </div>
+                      <div className="text-indigo-700">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </a>
+                  </li>
+                  <li className="bg-blue-50 rounded p-2">
+                    <a href="#" className="flex items-center">
+                      <div className="h-8 w-8 bg-blue-200 rounded flex items-center justify-center mr-3">
+                        <Award className="h-4 w-4 text-blue-700" />
+                      </div>
+                      <div className="flex-grow">
+                        <div className="font-medium text-sm">Financial Trivia</div>
+                        <div className="text-xs text-gray-500">Test your knowledge</div>
+                      </div>
+                      <div className="text-blue-700">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </a>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter className="bg-gray-50 px-4 py-3 border-t">
+                <Button variant="ghost" className="w-full text-blue-700 justify-center">
+                  Play Games
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer */}
+      <div className="mt-12 text-center text-gray-500 text-sm">
+        <p>&copy; {new Date().getFullYear()} Financial Literacy App. All rights reserved.</p>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Dashboard;
