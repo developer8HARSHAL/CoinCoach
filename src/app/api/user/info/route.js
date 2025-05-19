@@ -26,7 +26,12 @@ export async function GET(request) {
     const { db } = await connectToDatabase();
     const userCollection = db.collection('users');
     
-    const userData = await userCollection.findOne({ email });
+   const userData = await userCollection.findOne({ email });
+console.log('User data retrieved:', userData);
+
+// Check specifically for age
+console.log('User age type:', typeof userData.age, 'value:', userData.age);
+
     
     if (!userData) {
       console.log('User not found in database:', email);

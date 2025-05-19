@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 
-const MONGODB_URI = "mongodb://127.0.0.1:27017/coincoach"; // Use 127.0.0.1 instead of localhost
+// Use environment variable for connection string
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/coincoach";
 const MONGODB_DB_NAME = "coincoach";
 
 let cachedClient = null;

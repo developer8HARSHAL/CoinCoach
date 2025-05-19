@@ -1,4 +1,4 @@
-import LearningModule from "../components/LearningModule"
+import LearningModule from "../components/Above18/LearningModulesComponents/budgetting"
 
 export default function budgetting(){
   return(

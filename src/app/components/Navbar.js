@@ -94,31 +94,57 @@ export default function Navbar() {
     return (names[0].charAt(0) + (names.length > 1 ? names[names.length - 1].charAt(0) : '')).toUpperCase();
   };
 
+
   const handleMarkAllAsRead = () => {
     markAllNotificationsAsRead();
   };
 
-  // Format time to relative format (e.g. "10 minutes ago")
+
+
+  const refreshNotifications = async () => {
+    try {
+      // Step 1: Trigger the PUT request to update the notification
+      await fetch('/api/user/notifications/profile-updated', { method: 'PUT' });
+  
+      // Step 2: Fetch the updated notification list
+      const response = await fetch('/api/user/notifications');
+      const data = await response.json();
+  
+      // Step 3: Update the UI with new notifications
+      setNotifications(data.notifications || []);
+    } catch (error) {
+      console.error('Failed to refresh notifications:', error);
+    }
+  };
+  
+  
+
+  
   const formatRelativeTime = (isoString) => {
     try {
       const date = new Date(isoString);
+      if (isNaN(date.getTime())) throw new Error('Invalid date');
+  
       const now = new Date();
       const diffMs = now - date;
+  
+      if (diffMs < 0) return 'In the future';
+  
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMins / 60);
       const diffDays = Math.floor(diffHours / 24);
-
+  
       if (diffMins < 1) return 'Just now';
       if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
       if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
       if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-      
-      return date.toLocaleDateString();
+  
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     } catch (e) {
       return 'Recently';
     }
   };
-
+  
   // Course submenu items with icons and descriptions
   const courseItems = [
     {  
@@ -200,60 +226,7 @@ export default function Navbar() {
                     </Link>
                   </NavigationMenuItem>
                   
-                  {/* Enhanced Courses Dropdown */}
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
-                      <BookOpen className="mr-1 h-4 w-4" />
-                      <span>Courses</span>
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <div className="w-[500px] lg:w-[450px] p-4">
-                        <div className="grid gap-4">
-                          <div className="col-span-4 grid grid-cols-2 gap-x-4">
-                            {/* Popular Courses */}
-                            <div>
-                              <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Popular Courses</h4>
-                              <ul className="grid gap-2">
-                                {courseItems.slice(0, 3).map((item) => (
-                                  <ListItem
-                                    key={item.title}
-                                    title={item.title}
-                                    href={item.href}
-                                    icon={item.icon}
-                                  >
-                                    {item.description}
-                                  </ListItem>
-                                ))}
-                              </ul>
-                            </div>
-                            {/* Specialized Topics */}
-                            <div>
-                              <h4 className="text-sm font-semibold text-yellow-600 mb-2 px-3">Specialized Topics</h4>
-                              <ul className="grid gap-2">
-                                {courseItems.slice(3).map((item) => (
-                                  <ListItem
-                                    key={item.title}
-                                    title={item.title}
-                                    href={item.href}
-                                    icon={item.icon}
-                                  >
-                                    {item.description}
-                                  </ListItem>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                          <div className="mt-4 pt-3 border-t border-gray-100">
-                            {/* <Link href="/course" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700"> */}
-                            <Link href="/courses" className="text-xs font-medium text-yellow-600 flex items-center hover:text-yellow-700">
-                              View all courses
-                              <ChevronRight className="ml-1 h-3 w-3" />
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
+            
               {/* Enhanced Courses Dropdown */}
 <NavigationMenuItem>
   <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">

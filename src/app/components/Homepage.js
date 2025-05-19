@@ -37,6 +37,105 @@ const staggerContainer = {
   }
 };
 
+// Define age-specific course modules - same structure as in AllCourses.js
+const coursesData = {
+  // Below 18 courses
+  under18: [
+    {
+      title: "Money Basics",
+      description: "Learn about the value of money and how inflation affects your savings.",
+      image: "/images/ymoney.jpg",
+      topics: [
+        "Time value of money",
+        "Understanding inflation",
+        "Saving basics",
+        "Financial planning for teens"
+      ],
+    },
+    {
+      title: "Financial Concepts",
+      description: "Understand opportunity cost and how interest calculations work.",
+      image: "/images/yFinancial.jpg",
+      topics: [
+        "Opportunity cost basics",
+        "Interest calculations",
+        "Making financial decisions",
+        "Planning for the future"
+      ],
+    },
+    {
+      title: "Banking Essentials",
+      description: "Learn how to read bank statements and use digital payment methods safely.",
+      image: "/images/ybank.jpg",
+      topics: [
+        "Reading bank statements",
+        "Digital payments",
+        "Banking safety",
+        "Setting up your first account"
+      ],
+    },
+    {
+      title: "Financial Planning",
+      description: "Discover taxation basics and how mutual funds work.",
+      image: "/images/yplanning.jpg",
+      topics: [
+        "Taxation basics for teens",
+        "Introduction to mutual funds",
+        "Setting financial goals",
+        "Planning for education"
+      ],
+    }
+  ],
+  
+  // Above 18 courses (kept the original module data)
+  above18: [
+    {
+      title: "Budgeting Basics",
+      description: "Learn how to create and maintain a budget that works for your financial goals and lifestyle.",
+      image: "/Budgeting.jpg",
+      topics: [
+        "Creating your first budget",
+        "Tracking expenses effectively",
+        "Setting financial goals",
+        "Budget adjustment strategies"
+      ]
+    },
+    {
+      title: "Saving Strategies",
+      description: "Discover proven techniques to build your savings and create financial security.",
+      image: "/saving.png",
+      topics: [
+        "Emergency fund essentials",
+        "Automating your savings",
+        "High-yield savings options",
+        "Saving for major purchases"
+      ]
+    },
+    {
+      title: "Investment Fundamentals",
+      description: "Start your investment journey with clear explanations of investment basics and options.",
+      image: "/images/invest.jpg",
+      topics: [
+        "Understanding risk and return",
+        "Types of investment accounts",
+        "Introduction to stocks and bonds",
+        "Building a diversified portfolio"
+      ]
+    },
+    {
+      title: "Debt Management",
+      description: "Take control of your debt with strategic approaches to reduce and eliminate what you owe.",
+      image: "/Debt.jpg",
+      topics: [
+        "Prioritizing debt repayment",
+        "Debt consolidation options",
+        "Improving your credit score",
+        "Negotiating with creditors"
+      ]
+    }
+  ]
+};
+
 const StatCard = ({ icon: Icon, count, label, delay }) => {
   const [value, setValue] = useState(0);
   
@@ -72,7 +171,7 @@ const StatCard = ({ icon: Icon, count, label, delay }) => {
   );
 };
 
-// Module Card Component
+// Updated Module Card Component - now with age-aware functionality
 const ModuleCard = ({ title, description, image, topics, index }) => {
   const [completed, setCompleted] = useState(false);
 
@@ -132,6 +231,14 @@ const ModuleCard = ({ title, description, image, topics, index }) => {
   );
 };
 
+// Added new component to display during user data loading
+const ModuleLoading = () => (
+  <div className="text-center py-6">
+    <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p className="text-gray-500">Personalizing courses for you...</p>
+  </div>
+);
+
 export default function Homepage() {
   // Animation controls for different sections
   const heroControls = useAnimation();
@@ -153,6 +260,12 @@ export default function Homepage() {
   const [featureTwoRef, featureTwoInView] = useInView({ threshold: 0.1, triggerOnce: true });
   const [modulesRef, modulesInView] = useInView({ threshold: 0.1, triggerOnce: true });
 
+  // NEW: Added state for user data and loading
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [displayModules, setDisplayModules] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // Trigger animations when sections come into view
   useEffect(() => {
     if (heroInView) heroControls.start('visible');
@@ -170,53 +283,52 @@ export default function Homepage() {
     featureOneControls, featureTwoControls, modulesControls
   ]);
 
-  // Module data
-  const modules = [
-    {
-      title: "Budgeting Basics",
-      description: "Learn how to create and maintain a budget that works for your financial goals and lifestyle.",
-      image: "/Budgeting.jpg",
-      topics: [
-        "Creating your first budget",
-        "Tracking expenses effectively",
-        "Setting financial goals",
-        "Budget adjustment strategies"
-      ]
-    },
-    {
-      title: "Saving Strategies",
-      description: "Discover proven techniques to build your savings and create financial security.",
-      image: "/saving.png",
-      topics: [
-        "Emergency fund essentials",
-        "Automating your savings",
-        "High-yield savings options",
-        "Saving for major purchases"
-      ]
-    },
-    {
-      title: "Investment Fundamentals",
-      description: "Start your investment journey with clear explanations of investment basics and options.",
-      image: "/images/invest.jpg",
-      topics: [
-        "Understanding risk and return",
-        "Types of investment accounts",
-        "Introduction to stocks and bonds",
-        "Building a diversified portfolio"
-      ]
-    },
-    {
-      title: "Debt Management",
-      description: "Take control of your debt with strategic approaches to reduce and eliminate what you owe.",
-      image: "/Debt.jpg",
-      topics: [
-        "Prioritizing debt repayment",
-        "Debt consolidation options",
-        "Improving your credit score",
-        "Negotiating with creditors"
-      ]
-    }
-  ];
+  // NEW: Added effect to fetch user data and select appropriate modules
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/user/info');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        
+        const data = await response.json();
+        console.log("User data received:", data);
+        
+        // Set user data
+        setUserData(data);
+        
+        // Determine admin status
+        const userIsAdmin = data.role === 'admin';
+        setIsAdmin(userIsAdmin);
+        
+        // Get age from demographics object
+        const userAge = data.demographics?.age;
+        
+        // Select appropriate modules based on user age
+        if (userAge !== undefined && userAge !== null) {
+          const ageGroup = userAge < 18 ? 'under18' : 'above18';
+          // For homepage, just show first 4
+          setDisplayModules(coursesData[ageGroup].slice(0, 4));
+          console.log(`Showing ${ageGroup} courses for user age ${userAge}`);
+        } else {
+          // Default to adult courses if no age provided
+          setDisplayModules(coursesData.above18.slice(0, 4));
+          console.log('No age data found, defaulting to adult courses');
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        // Default to adult courses on error
+        setDisplayModules(coursesData.above18.slice(0, 4));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <div className="overflow-hidden font-sans">
@@ -465,7 +577,7 @@ export default function Homepage() {
         </div>
       </motion.div>
 
-      {/* Self-Paced Modules Section */}
+      {/* UPDATED: Self-Paced Modules Section - Now Age-Aware */}
       <motion.div 
         id="modules"
         ref={modulesRef}
@@ -484,73 +596,96 @@ export default function Homepage() {
             </span>
           </h2>
           <p className="text-gray-600 text-center max-w-3xl mx-auto mb-16">
-            Learn at your own pace with our comprehensive self-guided modules. Track your progress and mark completed sections as you master financial concepts.
+            {userData?.demographics?.age !== undefined ? 
+              `Welcome ${userData.name || ''}! Here are financial courses tailored for ${userData.demographics.age < 18 ? 'teens' : 'adults'}.` :
+              'Learn at your own pace with our comprehensive self-guided modules. Track your progress and mark completed sections as you master financial concepts.'}
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-            {modules.map((module, index) => (
-              <ModuleCard 
-                key={index}
-                title={module.title}
-                description={module.description}
-                image={module.image}
-                topics={module.topics}
-                index={index}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <ModuleLoading />
+          ) : (
+            // Continuing from the incomplete code in the modules section
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {displayModules.map((module, index) => (
+                <ModuleCard 
+                  key={index}
+                  title={module.title}
+                  description={module.description}
+                  image={module.image}
+                  topics={module.topics}
+                  index={index}
+                />
+              ))}
+            </div>
+          )}
           
-          <div className="text-center">
-            <button 
-              onClick={() => window.location.href = '/courses'}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          <div className="text-center mt-12">
+            <a 
+              href="/allcourses" 
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-medium px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
             >
-              View More Modules
-            </button>
+              View All Courses →
+            </a>
           </div>
         </div>
       </motion.div>
 
-      {/* Call to Action */}
-      <div className="py-20 md:py-32 bg-gray-50">
+   
+
+      {/* Money Intelligence
+      <div className="py-20 md:py-32 bg-white">
         <div className="container mx-auto px-6">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-5 items-center">
-              <div className="md:col-span-3 p-8 md:p-12 text-white">
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Ready to start your financial journey?</h2>
-                <p className="text-lg md:text-xl opacity-90 mb-8">Join thousands of successful members who transformed their financial future with CoinCoach.</p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="bg-white text-purple-700 hover:text-purple-900 font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                    Try For FREE!
-                  </button>
-                
-                </div>
+          <div className="bg-gradient-to-tr from-yellow-500 to-yellow-300 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center">
+              <div className="p-10 md:p-16 text-center md:text-left">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                  Build Your<br/>
+                  <span className="text-white">Money Intelligence</span>
+                </h2>
+                <p className="text-gray-800 text-lg md:text-xl mb-8 max-w-xl">
+                  Understanding how money works is the first step to financial freedom. Our tools help you develop the intelligence and habits for lasting wealth.
+                </p>
+                <a 
+                  href="#modules" 
+                  className="inline-block bg-gray-900 hover:bg-gray-800 text-white font-bold px-8 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:translate-y-1 transition-all duration-300"
+                >
+                  Get Started →
+                </a>
               </div>
-              <div className="md:col-span-2 p-8">
-                <Lottie animationData={money} className="h-64 md:h-80" />
+              <div className="flex justify-center py-8 md:py-0">
+                <Lottie animationData={money} className="h-80 md:h-96 lg:h-[500px] w-auto" />
               </div>
             </div>
           </div>
         </div>
+      </div> */}
+
+      {/* Chat with AI Assistant */}
+      <div className="py-20 md:py-32 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-4xl mx-auto mb-16">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              <span className="relative inline-block px-2">
+                Ask Your Finance Questions
+                <svg className="absolute -bottom-2 left-0 w-full" xmlns="http://www.w3.org/2000/svg" height="12" viewBox="0 0 100 12" preserveAspectRatio="none">
+                  <path d="M0,0 Q50,12 100,0" fill="#EAB308" />
+                </svg>
+              </span>
+            </h2>
+            <p className="text-lg text-gray-600">
+              Our AI assistant is here to answer your financial questions, big or small. 
+              Try it now with a sample question or ask your own!
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <Chatbot />
+          </div>
+        </div>
       </div>
 
-      <Chatbot/>
+      
 
-      {/* Added CSS for animations */}
-      <style jsx>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(20px, -15px) scale(1.1); }
-          50% { transform: translate(0, 15px) scale(0.9); }
-          75% { transform: translate(-20px, -15px) scale(1.1); }
-        }
-        .animate-blob {
-          animation: blob 10s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-      `}</style>
     </div>
   );
 }
