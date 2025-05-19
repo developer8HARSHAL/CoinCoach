@@ -5,9 +5,5 @@
       "maxDuration": 30
     }
   },
-  "regions": ["iad1"],
-  "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "FIREBASE_ADMIN_CREDENTIALS_JSON": "@firebase_admin_credentials_json"
-  }
+  "regions": ["iad1"]
 }
