@@ -5,130 +5,6 @@ import { FaCheckCircle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 
-// ModuleCard component restyled to match page.js styling
-const ModuleCard = ({ name, title, description, image, topics, index, completed, onComplete }) => {
-  const router = useRouter();
-
-  // Animation variants
-  const cardVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: i * 0.1,
-        duration: 0.5,
-      }
-    })
-  };
-
-  const handleStartLearning = () => {
-    router.push(`/${name}`);
-  };
-
-  return (
-    <motion.div
-      custom={index}
-      variants={cardVariants}
-      onClick={handleStartLearning}
-      className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform transition hover:-translate-y-2 hover:shadow-xl"
-    >
-      <div className="h-48 bg-gray-200 relative overflow-hidden">
-        {image && (
-          <img 
-            src={image} 
-            alt={title} 
-            className="w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
-          <h3 className="text-xl font-bold text-white p-4">{title}</h3>
-        </div>
-        <div
-          className={`absolute top-3 right-3 p-2 rounded-full ${completed ? 'bg-green-500' : 'bg-gray-200'}`}
-        >
-          <FaCheckCircle className={`w-6 h-6 ${completed ? 'text-white' : 'text-gray-500'}`} />
-        </div>
-      </div>
-      <div className="p-6">
-        <p className="text-gray-600 mb-4">{description}</p>
-        {topics && topics.length > 0 && (
-          <div className="mb-4">
-            <h4 className="font-semibold text-sm text-gray-500 mb-2">Topics covered:</h4>
-            <div className="flex flex-wrap gap-2">
-              {topics.slice(0, 3).map((topic, i) => (
-                <span key={i} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                  {topic}
-                </span>
-              ))}
-              {topics.length > 3 && (
-                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                  +{topics.length - 3} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        <div className="flex justify-between items-center">
-          <button 
-            className="px-4 py-2 text-purple-600 rounded-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleStartLearning();
-            }}
-          >
-            Start Learning
-          </button>
-          <button
-            className={`flex items-center ${completed ? 'text-green-600 hover:text-green-800' : 'text-gray-500 hover:text-gray-700'} font-medium`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onComplete();
-            }}
-          >
-            {completed ? 'Completed' : 'Mark Complete'}
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// AgeSelector component to filter courses by age group
-const AgeSelector = ({ selectedAgeGroup, setSelectedAgeGroup, userAge, isAdmin }) => {
-  const ageGroups = [
-    { id: 'all', label: 'All Courses' },
-    { id: 'under18', label: 'Under 18' },
-    { id: 'above18', label: 'Above 18' }
-  ];
-
-  // If not admin, only show age groups that are relevant to the user
-  const filteredAgeGroups = isAdmin 
-    ? ageGroups 
-    : [
-        { id: userAge < 18 ? 'under18' : 'above18', 
-          label: userAge < 18 ? 'Under 18' : 'Above 18' }
-      ];
-
-  return (
-    <div className="flex flex-wrap justify-center gap-4 mb-12">
-      {filteredAgeGroups.map((group) => (
-        <button
-          key={group.id}
-          onClick={() => setSelectedAgeGroup(group.id)}
-          className={`px-6 py-3 rounded-full font-medium transition ${
-            selectedAgeGroup === group.id
-              ? 'bg-purple-600 text-white shadow-md'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          {group.label}
-        </button>
-      ))}
-    </div>
-  );
-};
-
 // Define course modules for different age groups
 const coursesData = {
   // Below 18 courses
@@ -260,6 +136,153 @@ const coursesData = {
   ]
 };
 
+// Add this component for better UX during age detection:
+const AgeDetectionLoader = () => (
+  <div className="text-center py-12">
+    <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p className="text-gray-600">Detecting your age group...</p>
+    <p className="text-sm text-gray-500 mt-2">Preparing personalized courses for you</p>
+  </div>
+);
+
+// ModuleCard component restyled to match page.js styling
+const ModuleCard = ({ name, title, description, image, topics, index, completed, onComplete, userData, isAdmin }) => {
+  const router = useRouter();
+
+  // Animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+      }
+    })
+  };
+
+  // Get the user's age from the demographics object
+  const userAge = userData?.demographics?.age;
+
+  const handleStartLearning = () => {
+    // Validate access before navigation
+    if (userData && userAge !== undefined) {
+      const userAgeGroup = userAge < 18 ? 'under18' : 'above18';
+      const courseAgeGroup = coursesData.under18.some(c => c.name === name) ? 'under18' : 'above18';
+      
+      if (!isAdmin && userAgeGroup !== courseAgeGroup) {
+        alert(`This course is not available for your age group. Please select courses from the ${userAgeGroup} section.`);
+        return;
+      }
+    }
+    
+    router.push(`/${name}`);
+  };
+
+  return (
+    <motion.div
+      custom={index}
+      variants={cardVariants}
+      onClick={handleStartLearning}
+      className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform transition hover:-translate-y-2 hover:shadow-xl"
+    >
+      <div className="h-48 bg-gray-200 relative overflow-hidden">
+        {image && (
+          <img 
+            src={image} 
+            alt={title} 
+            className="w-full h-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
+          <h3 className="text-xl font-bold text-white p-4">{title}</h3>
+        </div>
+        <div
+          className={`absolute top-3 right-3 p-2 rounded-full ${completed ? 'bg-green-500' : 'bg-gray-200'}`}
+        >
+          <FaCheckCircle className={`w-6 h-6 ${completed ? 'text-white' : 'text-gray-500'}`} />
+        </div>
+      </div>
+      <div className="p-6">
+        <p className="text-gray-600 mb-4">{description}</p>
+        {topics && topics.length > 0 && (
+          <div className="mb-4">
+            <h4 className="font-semibold text-sm text-gray-500 mb-2">Topics covered:</h4>
+            <div className="flex flex-wrap gap-2">
+              {topics.slice(0, 3).map((topic, i) => (
+                <span key={i} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                  {topic}
+                </span>
+              ))}
+              {topics.length > 3 && (
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                  +{topics.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="flex justify-between items-center">
+          <button 
+            className="px-4 py-2 text-purple-600 rounded-lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStartLearning();
+            }}
+          >
+            Start Learning
+          </button>
+          <button
+            className={`flex items-center ${completed ? 'text-green-600 hover:text-green-800' : 'text-gray-500 hover:text-gray-700'} font-medium`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onComplete();
+            }}
+          >
+            {completed ? 'Completed' : 'Mark Complete'}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// AgeSelector component to filter courses by age group
+const AgeSelector = ({ selectedAgeGroup, setSelectedAgeGroup, userAge, isAdmin }) => {
+  const ageGroups = [
+    { id: 'all', label: 'All Courses' },
+    { id: 'under18', label: 'Under 18' },
+    { id: 'above18', label: 'Above 18' }
+  ];
+
+  // If not admin, only show age groups that are relevant to the user
+  const filteredAgeGroups = isAdmin 
+    ? ageGroups 
+    : [
+        { id: userAge < 18 ? 'under18' : 'above18', 
+          label: userAge < 18 ? 'Under 18' : 'Above 18' }
+      ];
+
+  return (
+    <div className="flex flex-wrap justify-center gap-4 mb-12">
+      {filteredAgeGroups.map((group) => (
+        <button
+          key={group.id}
+          onClick={() => setSelectedAgeGroup(group.id)}
+          className={`px-6 py-3 rounded-full font-medium transition ${
+            selectedAgeGroup === group.id
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          {group.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 // Main CoursesPage component
 export default function AgeSpecificCoursesPage() {
   const [moduleStates, setModuleStates] = useState({});
@@ -267,7 +290,8 @@ export default function AgeSpecificCoursesPage() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false); // Admin flag - could be based on user role
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   
   // Animation controls
@@ -276,246 +300,112 @@ export default function AgeSpecificCoursesPage() {
     threshold: 0.1
   });
 
-  // Fetch user data on component mount
+  // Function to handle course completion
+  const handleComplete = (moduleName) => {
+    setModuleStates(prev => ({
+      ...prev,
+      [moduleName]: !prev[moduleName]
+    }));
+  };
+
+  // Replace the existing useEffect that fetches user data with this optimized version:
   useEffect(() => {
-    fetchUserData();
-    
-    // Set up event listener for user data updates
-    window.addEventListener('userDataUpdated', handleUserDataUpdate);
-    
-    // Add event listener for real-time user profile updates
-    window.addEventListener('userProfileUpdated', handleProfileUpdate);
-    
-    // Add event listener for user age changes
-    window.addEventListener('userAgeChanged', handleAgeChange);
-    
-    // Cleanup event listeners when component unmounts
-    return () => {
-      window.removeEventListener('userDataUpdated', handleUserDataUpdate);
-      window.removeEventListener('userProfileUpdated', handleProfileUpdate);
-      window.removeEventListener('userAgeChanged', handleAgeChange);
+    const initializeUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/user/info');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        
+        const data = await response.json();
+        console.log("User data received:", data);
+        
+        // Set user data
+        setUserData(data);
+        
+        // Determine admin status
+        const userIsAdmin = data.role === 'admin';
+        setIsAdmin(userIsAdmin);
+        
+        // Get age from demographics object
+        const userAge = data.demographics?.age;
+        
+        // Auto-set age group based on user's age (this is the key fix)
+        if (userAge !== undefined && userAge !== null) {
+          const ageGroup = userAge < 18 ? 'under18' : 'above18';
+          setSelectedAgeGroup(ageGroup);
+          console.log(`Setting age group to ${ageGroup} based on user age ${userAge}`);
+        } else {
+          // Handle users without age set
+          setSelectedAgeGroup('above18'); // Default to adult courses
+          console.warn('User age not set in demographics, defaulting to adult courses');
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError(err.message);
+        // Default to adult courses on error
+        setSelectedAgeGroup('above18');
+      } finally {
+        setLoading(false);
+      }
     };
+
+    initializeUserData();
   }, []);
 
-  // Handle specific age change events
-  const handleAgeChange = (event) => {
-    if (event.detail && event.detail.newAge !== undefined) {
-      const newAge = event.detail.newAge;
-      const newAgeGroup = newAge < 18 ? 'under18' : 'above18';
-      
-      // Calculate previous age group for comparison
-      const oldAgeGroup = userData?.age < 18 ? 'under18' : 'above18';
-      
-      // Update the userData with the new age
-      setUserData(prev => ({
-        ...prev,
-        age: newAge
-      }));
-      
-      // For non-admin users, we always enforce their age-appropriate content
-      if (!isAdmin) {
-        // Update the selected age group
-        setSelectedAgeGroup(newAgeGroup);
-        
-        // Only show refresh animation if the age group actually changed
-        if (oldAgeGroup !== newAgeGroup) {
-          triggerRefreshAnimation();
-        }
-      }
-    }
+  // Enhanced error handling for missing age
+  const handleMissingAge = () => {
+    return (
+      <div className="text-center py-12 bg-yellow-50 rounded-lg border border-yellow-200">
+        <h3 className="text-xl font-semibold text-yellow-800 mb-4">Age Information Required</h3>
+        <p className="text-yellow-700 mb-6">
+          Please update your profile with your age to see age-appropriate courses.
+        </p>
+        <button 
+          onClick={() => router.push('/dashboard')}
+          className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition"
+        >
+          Update Profile
+        </button>
+      </div>
+    );
   };
-  
-  // Handle general profile updates (including possible age changes)
-  const handleProfileUpdate = (event) => {
-    if (event.detail && event.detail.userData) {
-      const updatedUserData = event.detail.userData;
-      
-      // Calculate age groups for comparison
-      const oldAgeGroup = userData?.age < 18 ? 'under18' : 'above18';
-      const newAgeGroup = updatedUserData.age < 18 ? 'under18' : 'above18';
-      
-      // Check if the age group changed
-      const ageGroupChanged = oldAgeGroup !== newAgeGroup;
-      
-      // Update user data
-      setUserData(updatedUserData);
-      
-      // Update admin status
-      const userIsAdmin = updatedUserData.role === 'admin';
-      setIsAdmin(userIsAdmin);
-      
-      // For non-admin users, we always force them to see their age group's courses
-      if (!userIsAdmin) {
-        // Always update the selected age group to match their age
-        setSelectedAgeGroup(newAgeGroup);
-        
-        // Only show refresh animation if the age group changed
-        if (ageGroupChanged) {
-          triggerRefreshAnimation();
-        }
-      }
-    }
-  };
-  
-  // Setup a refresh animation effect to highlight course changes
-  const [refreshing, setRefreshing] = useState(false);
-  
-  const triggerRefreshAnimation = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000); // Animation duration
-  };
-  
-  // Handle user data updates (including age changes)
-  const handleUserDataUpdate = (event) => {
-    // Update the user data from the event
-    if (event.detail && event.detail.userData) {
-      const updatedUserData = event.detail.userData;
-      
-      // Calculate age groups
-      const oldAgeGroup = userData?.age < 18 ? 'under18' : 'above18';
-      const newAgeGroup = updatedUserData.age < 18 ? 'under18' : 'above18';
-      
-      // Check if age group changed
-      const ageGroupChanged = oldAgeGroup !== newAgeGroup;
-      
-      // Update user data
-      setUserData(updatedUserData);
-      
-      // Always update the admin status
-      setIsAdmin(updatedUserData.role === 'admin');
-      
-      // For non-admin users, always enforce their age-appropriate content
-      // This ensures they can't see courses from other age groups
-      if (!updatedUserData.role === 'admin') {
-        setSelectedAgeGroup(newAgeGroup);
-        
-        // Show refresh animation only if the age group actually changed
-        if (ageGroupChanged) {
-          triggerRefreshAnimation();
-        }
-      }
-    } else {
-      // If no detail is provided, fetch fresh data
-      fetchUserData();
-    }
-  };
-  
-  // Function to fetch user data
-  async function fetchUserData() {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/user/info');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
-      
-      const data = await response.json();
-      
-      setUserData(data);
-      
-      // Check if user is admin (you can adjust this based on your user roles)
-      const userIsAdmin = data.role === 'admin';
-      setIsAdmin(userIsAdmin);
-      
-      // Set the appropriate age group based on user's age
-      if (data.age !== undefined) {
-        const ageGroup = data.age < 18 ? 'under18' : 'above18';
-        
-        // For non-admin users, we force them to only see their age group's courses
-        // For admin users, we allow them to see 'all' courses if that was selected
-        if (!userIsAdmin || selectedAgeGroup === '') {
-          setSelectedAgeGroup(ageGroup);
-        }
-      } else {
-        // If age is not available, default to 'all' for admins only
-        // For regular users with missing age, default to adult courses
-        setSelectedAgeGroup(userIsAdmin ? 'all' : 'above18');
-      }
-    } catch (err) {
-      console.error('Error fetching user data:', err);
-      setError(err.message);
-      setSelectedAgeGroup('all'); // Default to all if there's an error
-    } finally {
-      setLoading(false);
-    }
-  }
 
-  // Setup polling for user data changes
-  useEffect(() => {
-    // Setup a polling interval to check for user data changes
-    const pollingInterval = setInterval(() => {
-      if (!loading) {  // Only poll if not currently loading
-        checkForUserDataChanges();
-      }
-    }, 30000); // Poll every 30 seconds
+  // Helper function to get user age safely
+  const getUserAge = () => {
+    return userData?.demographics?.age;
+  };
+
+  // Function to get displayed courses with validation
+  const getDisplayedCourses = () => {
+    // Get user age from demographics
+    const userAge = getUserAge();
     
-    return () => clearInterval(pollingInterval);
-  }, [loading]);
-  
-  // Function to check for user data changes
-  const checkForUserDataChanges = async () => {
-    try {
-      const response = await fetch('/api/user/info');
-      
-      if (!response.ok) {
-        return;  // Silently fail on polling errors
-      }
-      
-      const data = await response.json();
-      
-      // Update admin status
-      const userIsAdmin = data.role === 'admin';
-      
-      // Check if age group changed
-      if (userData && data.age !== undefined) {
-        const currentAgeGroup = userData.age < 18 ? 'under18' : 'above18';
-        const newAgeGroup = data.age < 18 ? 'under18' : 'above18';
-        
-        // Check if role changed
-        const roleChanged = (userData.role === 'admin') !== (data.role === 'admin');
-        
-        if (currentAgeGroup !== newAgeGroup || roleChanged) {
-          // Age group or role changed, update data
-          setUserData(data);
-          setIsAdmin(userIsAdmin);
-          
-          // For non-admin users, we force them to see their age group's courses
-          if (!userIsAdmin) {
-            setSelectedAgeGroup(newAgeGroup);
-            
-            // Only show refresh animation if the age group actually changed
-            if (currentAgeGroup !== newAgeGroup) {
-              triggerRefreshAnimation();
-            }
-          }
-        } else if (JSON.stringify(userData) !== JSON.stringify(data)) {
-          // Other user data changed, just update silently
-          setUserData(data);
-          setIsAdmin(userIsAdmin);
-        }
-      }
-    } catch (err) {
-      console.error('Error polling for user data:', err);
+    // For admin users, show all if 'all' is selected, otherwise show selected group
+    if (isAdmin && selectedAgeGroup === 'all') {
+      return [...coursesData.under18, ...coursesData.above18];
     }
+    
+    // For regular users or when specific age group is selected
+    const courses = coursesData[selectedAgeGroup] || [];
+    
+    // Additional validation: ensure user can access these courses
+    if (userData && userAge !== undefined) {
+      const userAgeGroup = userAge < 18 ? 'under18' : 'above18';
+      
+      // Non-admin users should only see their age group's courses
+      if (!isAdmin && selectedAgeGroup !== userAgeGroup) {
+        console.warn(`Access denied: User age group (${userAgeGroup}) doesn't match selected (${selectedAgeGroup})`);
+        return coursesData[userAgeGroup] || [];
+      }
+    }
+    
+    return courses;
   };
 
-  // Watch for changes in userData and update the age group accordingly
-  // Force appropriate age group selection for non-admin users
-  useEffect(() => {
-    if (userData && userData.age !== undefined) {
-      const appropriateAgeGroup = userData.age < 18 ? 'under18' : 'above18';
-      
-      // For non-admin users, always enforce the correct age group
-      // This ensures they can't see courses from other age groups
-      if (!isAdmin) {
-        // Force the selection to match their age group
-        setSelectedAgeGroup(appropriateAgeGroup);
-      }
-    }
-  }, [userData, isAdmin]);
+  const displayedCourses = getDisplayedCourses();
 
   // Animation variants
   const fadeIn = {
@@ -543,27 +433,14 @@ export default function AgeSpecificCoursesPage() {
     }
   };
 
-  // Filter courses based on selected age group
-  // For non-admin users, strictly show only their age group's courses
-  const displayedCourses = isAdmin && selectedAgeGroup === 'all'
-    ? [...coursesData.under18, ...coursesData.above18] 
-    : coursesData[selectedAgeGroup] || [];
+  // Check if age is available in demographics
+  const hasAgeInfo = userData?.demographics?.age !== undefined && userData?.demographics?.age !== null;
 
-  const handleComplete = (moduleName) => {
-    setModuleStates(prev => ({
-      ...prev,
-      [moduleName]: !prev[moduleName]
-    }));
-  };
-
-  // Show loading state
+  // Replace your current loading return with:
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex justify-center items-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your courses...</p>
-        </div>
+        <AgeDetectionLoader />
       </div>
     );
   }
@@ -576,7 +453,7 @@ export default function AgeSpecificCoursesPage() {
           <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button 
-            onClick={() => fetchUserData()} 
+            onClick={() => window.location.reload()} 
             className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
           >
             Try Again
@@ -627,8 +504,8 @@ export default function AgeSpecificCoursesPage() {
           </motion.div>
           
           <p className="text-gray-600 text-center max-w-3xl mx-auto mb-10">
-            {userData && userData.age !== undefined
-              ? `Welcome ${userData.name || 'back'}! Here are financial courses tailored for ${userData.age < 18 ? 'your age group' : 'adults'}.` 
+            {userData && hasAgeInfo
+              ? `Welcome ${userData.name || 'back'}! Here are financial courses tailored for ${getUserAge() < 18 ? 'your age group' : 'adults'}.` 
               : 'Learn at your own pace with our comprehensive self-guided modules.'}
           </p>
 
@@ -637,38 +514,42 @@ export default function AgeSpecificCoursesPage() {
             <AgeSelector 
               selectedAgeGroup={selectedAgeGroup} 
               setSelectedAgeGroup={setSelectedAgeGroup}
-              userAge={userData?.age}
+              userAge={getUserAge()}
               isAdmin={isAdmin}
             />
           )}
 
-          {/* Display message if no courses are available */}
-          {displayedCourses.length === 0 && (
+          {/* Main course display logic */}
+          {!hasAgeInfo ? (
+            handleMissingAge()
+          ) : displayedCourses.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-lg text-gray-600">No courses available for the selected age group.</p>
             </div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: refreshing ? 0.6 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {displayedCourses.map((module, index) => (
+                <ModuleCard
+                  key={`${selectedAgeGroup}-${index}`} // Add key to force re-render on age group change
+                  name={module.name}
+                  title={module.title}
+                  description={module.description}
+                  image={module.image}
+                  topics={module.topics}
+                  index={index}
+                  completed={!!moduleStates[module.name]}
+                  onComplete={() => handleComplete(module.name)}
+                  userData={userData}
+                  isAdmin={isAdmin}
+                />
+              ))}
+            </motion.div>
           )}
-
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: refreshing ? 0.6 : 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            {displayedCourses.map((module, index) => (
-              <ModuleCard
-                key={index}
-                name={module.name}
-                title={module.title}
-                description={module.description}
-                image={module.image}
-                topics={module.topics}
-                index={index}
-                completed={!!moduleStates[module.name]}
-                onComplete={() => handleComplete(module.name)}
-              />
-            ))}
-          </motion.div>
         </div>
       </motion.div>
     </div>
