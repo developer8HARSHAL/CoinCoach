@@ -259,6 +259,7 @@
         |-- use-toast.js
         |-- useModuleProgress.js
     |-- lib
+        |-- firebase-admin.js
         |-- firebaseAdmin.js
         |-- mongodb.js
         |-- utils.js
