@@ -6,7 +6,6 @@ import { cookies } from 'next/headers';
 export async function PUT(request) {
   try {
     // Get user email from cookie
-    // Get user email from cookie - FIX: use await before accessing cookies
     const cookieStore = await cookies();
     const userEmail = cookieStore.get('firebaseUserEmail')?.value;
     
@@ -19,7 +18,6 @@ export async function PUT(request) {
     const { db } = await connectToDatabase();
     const usersCollection = db.collection('users');
     
-    // Find the user
     // Find the user and their notifications
     const user = await usersCollection.findOne({ email: userEmail });
     
@@ -28,10 +26,7 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     
-    // Filter out all profile-related notifications and keep only non-profile ones
-    let notifications = (user.notifications || []).filter(notif => 
-      notif.title !== "Complete your profile" && 
-      notif.title !== "Profile Updated"
+    // Get user's current notifications
     const notifications = user.notifications || [];
     
     // Check if "Profile Updated" notification already exists
@@ -46,7 +41,6 @@ export async function PUT(request) {
     
     // Create a new notification for profile update
     const profileUpdatedNotification = {
-      id: Date.now(),
       id: Date.now(), // Generate a unique ID
       title: "Profile Updated",
       description: "Your profile has been successfully updated.",
@@ -54,10 +48,6 @@ export async function PUT(request) {
       unread: true
     };
     
-    // Add the new notification at the beginning of the array
-    notifications.unshift(profileUpdatedNotification);
-    
-    // Update the entire notifications array
     // Remove existing "Profile Updated" notification if it exists
     if (existingProfileUpdateIndex !== -1) {
       notifications.splice(existingProfileUpdateIndex, 1);
@@ -77,7 +67,6 @@ export async function PUT(request) {
       { $set: { notifications: notifications } }
     );
     
-    console.log('Successfully replaced all profile notifications with a single update notification');
     console.log('Successfully updated profile notification');
     return NextResponse.json({ 
       success: true,
