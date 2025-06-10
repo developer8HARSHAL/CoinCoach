@@ -150,25 +150,25 @@ export default function Navbar() {
   const courseItems = [
     {  
       title: "Budgeting Basics", 
-      href: "/courses/budgeting-basics",
+      href: "/budgetting",
       icon: <Wallet size={16} />,
       description: "Learn how to create and maintain a budget that works for your financial goals and lifestyle"
     },
     { 
       title: "Saving Strategies", 
-      href: "/courses/saving-strategies",
+      href: "/savings",
       icon: <PiggyBank size={16} />,
       description: "Discover proven techniques to build your savings and create financial security"
     },
     { 
       title: "Investment Fundamentals", 
-      href: "/courses/investment-fundamentals",
+      href: "/investments",
       icon: <BarChart2 size={16} />,
       description: "Start your investment journey with clear explanations of investment basics and options"
     },
     { 
       title: "Debt Management", 
-      href: "/courses/debt-management",
+      href: "/creditdebt",
       icon: <CreditCard size={16} />,
       description: "Take control of your debt with strategic approaches to reduce and eliminate what you owe"
     }
