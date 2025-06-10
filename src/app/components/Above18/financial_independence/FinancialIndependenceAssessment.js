@@ -89,7 +89,7 @@ export default function FinancialIndependenceAssessment() {
       {!isGameOver ? (
         <>
           <motion.h1
-            className="text-3xl md:text-4xl font-bold mb-5"
+            className="text-black text-3xl md:text-4xl font-bold mb-5"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -98,7 +98,7 @@ export default function FinancialIndependenceAssessment() {
           </motion.h1>
 
           <motion.div
-            className="bg-white p-6 rounded-xl shadow-lg w-4/5 md:w-2/3 text-center"
+            className="text-black bg-white p-6 rounded-xl shadow-lg w-4/5 md:w-2/3 text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -144,7 +144,7 @@ export default function FinancialIndependenceAssessment() {
           </motion.div>
         </>
       ) : (
-        <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+        <div className="text-black bg-white p-6 rounded-xl shadow-lg text-center">
           <motion.h2
             className="text-2xl font-bold mb-4"
             initial={{ opacity: 0 }}

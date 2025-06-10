@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import CreditDebt from "./";
-import CreditDebt2 from "./adultcourses/credit_debt_management/CreditDebt2page";
-
+import CreditDebt from "./Above18/credit_debt_management/CreditDebt";
+import CreditDebt2 from "./Above18/credit_debt_management/CreditDebt2page";
 import CreditDebitCrossword from "./Above18/credit_debt_management/CreditDebitCrossword";
 
 export default function CreditDebtModule() {

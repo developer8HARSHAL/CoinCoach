@@ -50,7 +50,7 @@ export default function FinancialIndependenceModule1() {
 <div className="min-h-screen mt-5 bg-gradient-to-br from-rose-50 via-amber-100 to-emerald-100 flex flex-col">
 <div className="text-center pt-10 px-6 pb-0">
 <motion.h1
-      className="text-4xl md:text-5xl font-bold mb-1 mt-10"
+      className="text-black text-4xl md:text-5xl font-bold mb-1 mt-10"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -59,7 +59,7 @@ export default function FinancialIndependenceModule1() {
     </motion.h1>
   
     <motion.p
-      className="text-2xl max-w-3xl mx-auto mb-0 mt-10"
+      className="text-black text-2xl max-w-3xl mx-auto mb-0 mt-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
