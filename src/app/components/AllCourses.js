@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaCheckCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 
@@ -145,8 +145,8 @@ const AgeDetectionLoader = () => (
   </div>
 );
 
-// ModuleCard component restyled to match page.js styling
-const ModuleCard = ({ name, title, description, image, topics, index, completed, onComplete, userData, isAdmin }) => {
+// Updated ModuleCard component with proper completion functionality
+const ModuleCard = ({ name, title, description, image, topics, index, completed, onComplete, userData, isAdmin, isUpdating }) => {
   const router = useRouter();
 
   // Animation variants
@@ -162,8 +162,8 @@ const ModuleCard = ({ name, title, description, image, topics, index, completed,
     })
   };
 
-  // Get the user's age from the demographics object
-  const userAge = userData?.demographics?.age;
+  // Get the user's age - check both age and demographics.age
+  const userAge = userData?.age || userData?.demographics?.age;
 
   const handleStartLearning = () => {
     // Validate access before navigation
@@ -225,7 +225,7 @@ const ModuleCard = ({ name, title, description, image, topics, index, completed,
         )}
         <div className="flex justify-between items-center">
           <button 
-            className="px-4 py-2 text-purple-600 rounded-lg"
+            className="px-4 py-2 text-purple-600 rounded-lg hover:bg-purple-50 transition"
             onClick={(e) => {
               e.stopPropagation();
               handleStartLearning();
@@ -234,13 +234,30 @@ const ModuleCard = ({ name, title, description, image, topics, index, completed,
             Start Learning
           </button>
           <button
-            className={`flex items-center ${completed ? 'text-green-600 hover:text-green-800' : 'text-gray-500 hover:text-gray-700'} font-medium`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+              completed 
+                ? 'text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100' 
+                : 'text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100'
+            } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
-              onComplete();
+              if (!isUpdating) {
+                onComplete(name);
+              }
             }}
+            disabled={isUpdating}
           >
-            {completed ? 'Completed' : 'Mark Complete'}
+            {isUpdating ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <FaCheckCircle />
+                {completed ? 'Completed' : 'Mark Complete'}
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -285,13 +302,14 @@ const AgeSelector = ({ selectedAgeGroup, setSelectedAgeGroup, userAge, isAdmin }
 
 // Main CoursesPage component
 export default function AgeSpecificCoursesPage() {
-  const [moduleStates, setModuleStates] = useState({});
+  const [completedCourses, setCompletedCourses] = useState([]);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState('');
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [updatingCourses, setUpdatingCourses] = useState(new Set());
   const router = useRouter();
   
   // Animation controls
@@ -300,15 +318,86 @@ export default function AgeSpecificCoursesPage() {
     threshold: 0.1
   });
 
-  // Function to handle course completion
-  const handleComplete = (moduleName) => {
-    setModuleStates(prev => ({
-      ...prev,
-      [moduleName]: !prev[moduleName]
-    }));
+  // Function to load course completion data
+  const loadCourseCompletions = async () => {
+    try {
+      const response = await fetch('/api/courses/completion');
+      if (response.ok) {
+        const data = await response.json();
+        setCompletedCourses(data.completedCourses || []);
+      }
+    } catch (error) {
+      console.error('Error loading course completions:', error);
+    }
   };
 
-  // Replace the existing useEffect that fetches user data with this optimized version:
+  // Function to handle course completion
+  const handleComplete = async (courseName) => {
+    // Prevent multiple simultaneous updates
+    if (updatingCourses.has(courseName)) {
+      return;
+    }
+
+    try {
+      // Add to updating set
+      setUpdatingCourses(prev => new Set(prev).add(courseName));
+
+      const isCurrentlyCompleted = completedCourses.includes(courseName);
+      const newCompletionStatus = !isCurrentlyCompleted;
+
+      // Optimistically update UI
+      setCompletedCourses(prev => 
+        newCompletionStatus 
+          ? [...prev, courseName]
+          : prev.filter(course => course !== courseName)
+      );
+
+      // Make API call
+      const response = await fetch('/api/courses/completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseName,
+          isCompleted: newCompletionStatus
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update course completion');
+      }
+
+      const result = await response.json();
+      
+      // Update with server response to ensure consistency
+      setCompletedCourses(result.completedCourses);
+      
+      // Show success feedback
+      console.log(`Course ${courseName} ${result.isCompleted ? 'completed' : 'unmarked'} successfully`);
+      
+    } catch (error) {
+      console.error('Error updating course completion:', error);
+      
+      // Revert optimistic update on error
+      setCompletedCourses(prev => 
+        completedCourses.includes(courseName)
+          ? [...prev, courseName] 
+          : prev.filter(course => course !== courseName)
+      );
+      
+      alert('Failed to update course completion. Please try again.');
+    } finally {
+      // Remove from updating set
+      setUpdatingCourses(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(courseName);
+        return newSet;
+      });
+    }
+  };
+
+  // Initialize user data and course completions
   useEffect(() => {
     const initializeUserData = async () => {
       try {
@@ -329,10 +418,10 @@ export default function AgeSpecificCoursesPage() {
         const userIsAdmin = data.role === 'admin';
         setIsAdmin(userIsAdmin);
         
-        // Get age from demographics object
-        const userAge = data.demographics?.age;
+        // Get age - check both direct age field and demographics.age
+        const userAge = data.age || data.demographics?.age;
         
-        // Auto-set age group based on user's age (this is the key fix)
+        // Auto-set age group based on user's age
         if (userAge !== undefined && userAge !== null) {
           const ageGroup = userAge < 18 ? 'under18' : 'above18';
           setSelectedAgeGroup(ageGroup);
@@ -340,8 +429,12 @@ export default function AgeSpecificCoursesPage() {
         } else {
           // Handle users without age set
           setSelectedAgeGroup('above18'); // Default to adult courses
-          console.warn('User age not set in demographics, defaulting to adult courses');
+          console.warn('User age not set, defaulting to adult courses');
         }
+
+        // Load course completion data
+        await loadCourseCompletions();
+        
       } catch (err) {
         console.error('Error fetching user data:', err);
         setError(err.message);
@@ -375,12 +468,12 @@ export default function AgeSpecificCoursesPage() {
 
   // Helper function to get user age safely
   const getUserAge = () => {
-    return userData?.demographics?.age;
+    return userData?.age || userData?.demographics?.age;
   };
 
   // Function to get displayed courses with validation
   const getDisplayedCourses = () => {
-    // Get user age from demographics
+    // Get user age
     const userAge = getUserAge();
     
     // For admin users, show all if 'all' is selected, otherwise show selected group
@@ -419,24 +512,11 @@ export default function AgeSpecificCoursesPage() {
       }
     }
   };
-  
-  // Refresh animation variants
-  const refreshVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { duration: 0.4 }
-    },
-    exit: { 
-      opacity: 0,
-      transition: { duration: 0.4 }
-    }
-  };
 
-  // Check if age is available in demographics
-  const hasAgeInfo = userData?.demographics?.age !== undefined && userData?.demographics?.age !== null;
+  // Check if age is available
+  const hasAgeInfo = getUserAge() !== undefined && getUserAge() !== null;
 
-  // Replace your current loading return with:
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex justify-center items-center">
@@ -489,20 +569,6 @@ export default function AgeSpecificCoursesPage() {
             </span>
           </h2>
           
-          {/* Conditional message for refresh animation */}
-          <motion.div
-            initial="hidden"
-            animate={refreshing ? "visible" : "hidden"}
-            exit="exit"
-            variants={refreshVariants}
-            className="bg-green-100 text-green-700 p-4 rounded-md mb-6 mx-auto max-w-3xl"
-          >
-            <div className="flex items-center justify-center">
-              <FaCheckCircle className="mr-2" />
-              <p>Courses updated to match your age group!</p>
-            </div>
-          </motion.div>
-          
           <p className="text-gray-600 text-center max-w-3xl mx-auto mb-10">
             {userData && hasAgeInfo
               ? `Welcome ${userData.name || 'back'}! Here are financial courses tailored for ${getUserAge() < 18 ? 'your age group' : 'adults'}.` 
@@ -535,17 +601,18 @@ export default function AgeSpecificCoursesPage() {
             >
               {displayedCourses.map((module, index) => (
                 <ModuleCard
-                  key={`${selectedAgeGroup}-${index}`} // Add key to force re-render on age group change
+                  key={`${selectedAgeGroup}-${module.name}`}
                   name={module.name}
                   title={module.title}
                   description={module.description}
                   image={module.image}
                   topics={module.topics}
                   index={index}
-                  completed={!!moduleStates[module.name]}
-                  onComplete={() => handleComplete(module.name)}
+                  completed={completedCourses.includes(module.name)}
+                  onComplete={handleComplete}
                   userData={userData}
                   isAdmin={isAdmin}
+                  isUpdating={updatingCourses.has(module.name)}
                 />
               ))}
             </motion.div>

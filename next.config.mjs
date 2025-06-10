@@ -17,7 +17,7 @@ const nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   // Optimize for production
-  swcMinify: true,
+  // swcMinify: true,
   // Suppress hydration warnings in development
   reactStrictMode: true,
   // Handle potential build issues
