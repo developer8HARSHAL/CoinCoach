@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../components/auth/AuthContext";
 import useModuleProgress from "../../../hooks/useModuleProgress";
 import { motion } from "framer-motion";
-import { FaArrowLeft, FaCheckCircle, FaArrowRight } from "react-icons/fa";
+import { FaArrowLeft, FaCheckCircle, FaArrowRight, FaCheck } from "react-icons/fa";
 
 // Import your module components
 import TimeValueOfMoneyModule from "../../components/youngCourses/belowEighteen";
@@ -81,11 +81,13 @@ const courseModules = {
   }
 };
 
-// Custom hook for module progress tracking
+// Enhanced custom hook for module progress tracking
 function useModuleProgressTracking(courseId, totalModules) {
   const [currentModule, setCurrentModule] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [completedCourses, setCompletedCourses] = useState([]);
   const { user } = useAuth();
 
   // Fetch progress when component mounts
@@ -104,9 +106,36 @@ function useModuleProgressTracking(courseId, totalModules) {
       const response = await fetch(`/api/progress?uid=${user.uid}`);
       const data = await response.json();
       
+      console.log("Fetched progress data:", data); // Debug log
+      
+      // Set completed courses from database
+      const dbCompletedCourses = data.completedCourses || [];
+      setCompletedCourses(dbCompletedCourses);
+      
+      // Check if current course is completed - check both array and module data
+      const courseCompleted = dbCompletedCourses.includes(courseId);
+      const moduleCompleted = data.modules?.[courseId]?.isCompleted || false;
+      const finalCompletionStatus = courseCompleted || moduleCompleted;
+      
+      console.log("Completion check:", {
+        courseId,
+        courseCompleted,
+        moduleCompleted,
+        finalCompletionStatus
+      });
+      
+      setIsCompleted(finalCompletionStatus);
+      
       if (data.modules && data.modules[courseId]) {
         const courseProgress = data.modules[courseId];
-        setProgress(courseProgress.progress || 0);
+        
+        // If course is marked as completed, set progress to 100%
+        if (finalCompletionStatus) {
+          setProgress(100);
+          setIsCompleted(true);
+        } else {
+          setProgress(courseProgress.progress || 0);
+        }
         
         // Set the starting module based on previous progress
         if (courseProgress.completedSections) {
@@ -116,6 +145,10 @@ function useModuleProgressTracking(courseId, totalModules) {
           );
           setCurrentModule(moduleToStart);
         }
+      } else if (finalCompletionStatus) {
+        // If course is completed but no module data exists, set to 100%
+        setProgress(100);
+        setIsCompleted(true);
       }
     } catch (error) {
       console.error("Error fetching progress:", error);
@@ -133,10 +166,16 @@ function useModuleProgressTracking(courseId, totalModules) {
     // If marking course as complete, set to 100%, otherwise calculate
     const newProgress = isComplete ? 100 : Math.round((completedSections / totalModules) * 100);
     
+    console.log("Saving progress:", {
+      courseId,
+      moduleIndex,
+      isComplete,
+      newProgress,
+      completedSections,
+      totalModules
+    });
+    
     try {
-      // Update local state
-      setProgress(newProgress);
-      
       // Save to backend
       const response = await fetch('/api/progress', {
         method: 'POST',
@@ -146,15 +185,28 @@ function useModuleProgressTracking(courseId, totalModules) {
         body: JSON.stringify({
           uid: user.uid,
           moduleId: courseId,
-          moduleName: courseId,
+          moduleName: courseModules[courseId]?.title || courseId,
           completedSections: isComplete ? totalModules : completedSections,
           totalSections: totalModules,
           progress: newProgress,
+          markAsComplete: isComplete
         }),
       });
       
       if (!response.ok) {
         throw new Error('Failed to save progress');
+      }
+      
+      const result = await response.json();
+      console.log("Save progress result:", result); // Debug log
+      
+      // Update local state based on API response
+      setProgress(result.progress || newProgress);
+      
+      // If marking as complete, update local state
+      if (isComplete && result.isCompleted) {
+        setIsCompleted(true);
+        setCompletedCourses(result.completedCourses || []);
       }
       
       return true;
@@ -171,32 +223,85 @@ function useModuleProgressTracking(courseId, totalModules) {
   
   // Mark the entire course as complete
   const markCourseComplete = async () => {
-    return await saveProgress(totalModules - 1, true);
+    const success = await saveProgress(totalModules - 1, true);
+    if (success) {
+      // Force refresh the progress data to ensure state is in sync
+      console.log("Course marked complete, refreshing progress data...");
+      await fetchProgress();
+    }
+    return success;
+  };
+
+  // Function to refresh progress data
+  const refreshProgress = async () => {
+    await fetchProgress();
   };
 
   return {
     currentModule,
     setCurrentModule,
     progress,
+    isCompleted,
+    completedCourses,
     markModuleComplete,
     markCourseComplete,
     isLoading,
+    refreshProgress
   };
 }
 
 // Component for Module Content
-function ModuleContent({ module, onNext, onPrev, isLastModule, courseId, moduleIndex, totalModules, onComplete }) {
+function ModuleContent({ 
+  module, 
+  onNext, 
+  onPrev, 
+  isLastModule, 
+  courseId, 
+  moduleIndex, 
+  totalModules, 
+  onComplete,
+  onMarkAsDone,
+  isCompleted 
+}) {
   const ModuleComponent = module.component;
   const router = useRouter();
+  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   
   const handleLastModule = async () => {
     await onComplete();
     router.push("/course");
   };
+
+  const handleMarkAsDone = async () => {
+    setIsMarkingComplete(true);
+    try {
+      console.log("Marking course as done...");
+      await onMarkAsDone();
+    } finally {
+      setIsMarkingComplete(false);
+    }
+  };
   
   return (
     <div className="rounded-xl">
-      <h2 className="text-2xl font-bold mb-4">{module.title}</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">{module.title}</h2>
+        {!isCompleted ? (
+          <button
+            onClick={handleMarkAsDone}
+            disabled={isMarkingComplete}
+            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaCheck className="mr-2" /> 
+            {isMarkingComplete ? "Marking..." : "Mark as Done"}
+          </button>
+        ) : (
+          <div className="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+            <FaCheckCircle className="mr-2" /> Completed
+          </div>
+        )}
+      </div>
+      
       <div className="prose max-w-none">
         {/* Render the actual module component */}
         <ModuleComponent onNext={onNext} />
@@ -281,9 +386,12 @@ export default function CoursePage() {
     currentModule, 
     setCurrentModule, 
     progress, 
+    isCompleted,
+    completedCourses,
     markModuleComplete, 
     markCourseComplete,
-    isLoading 
+    isLoading,
+    refreshProgress
   } = useModuleProgressTracking(courseId, courseData?.modules?.length || 0);
   
   // Handle user not logged in
@@ -338,6 +446,7 @@ export default function CoursePage() {
   // Handle complete course button click (last module)
   const handleComplete = async () => {
     try {
+      console.log("Completing course from last module...");
       // Mark the entire course as complete (100%)
       await markCourseComplete();
       // Router will navigate to /course page from the ModuleContent component
@@ -345,12 +454,28 @@ export default function CoursePage() {
       console.error("Error completing course:", error);
     }
   };
-  
-  // Check if the course is completed
-  const isCompleted = progress === 100;
+
+  // Handle mark as done button click
+  const handleMarkAsDone = async () => {
+    try {
+      console.log("Marking course as done from button...");
+      await markCourseComplete();
+      // After marking as done, the state should automatically update
+    } catch (error) {
+      console.error("Error marking course as done:", error);
+    }
+  };
   
   // Check if current module is the last one
   const isLastModule = currentModule === courseData.modules.length - 1;
+  
+  console.log("Current course state:", {
+    courseId,
+    isCompleted,
+    progress,
+    currentModule,
+    totalModules: courseData.modules.length
+  });
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 py-16 px-6">
@@ -364,7 +489,14 @@ export default function CoursePage() {
             <FaArrowLeft className="mr-2" />
             Back to Courses
           </button>
-          <h1 className="text-2xl font-bold text-center">{courseData.title}</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-center">{courseData.title}</h1>
+            {isCompleted && (
+              <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                <FaCheckCircle className="mr-1" /> Completed
+              </div>
+            )}
+          </div>
           <div className="w-24"></div> {/* Spacer for alignment */}
         </div>
         
@@ -387,9 +519,9 @@ export default function CoursePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          key={currentModule} // Add key to trigger animation on module change
+          key={`${currentModule}-${isCompleted}`} // Add key to trigger animation on module/completion change
         >
-          {isCompleted ? (
+          {isCompleted && progress === 100 ? (
             <CourseCompletion courseId={courseId} courseTitle={courseData.title} />
           ) : (
             courseData.modules[currentModule] && (
@@ -402,6 +534,8 @@ export default function CoursePage() {
                 moduleIndex={currentModule}
                 totalModules={courseData.modules.length}
                 onComplete={handleComplete}
+                onMarkAsDone={handleMarkAsDone}
+                isCompleted={isCompleted}
               />
             )
           )}

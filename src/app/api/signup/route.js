@@ -1,8 +1,8 @@
 // src/app/api/auth/signup/route.js
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '../../../../lib/mongodb';
+import { connectToDatabase } from '../../../lib/mongodb';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../../firebase/Firebase';
+import { auth } from '../../../lib/firebaseAdmin';
 
 export async function POST(request) {
     try {

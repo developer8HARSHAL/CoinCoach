@@ -1,0 +1,125 @@
+# Email Payment Detection Implementation Plan
+
+## Overview
+Integrate automated payment detection from Gmail to reduce manual expense entry in CoinCoach.
+
+## Phase 1: Foundation Setup
+
+### Step 1: Google Cloud & Gmail API Setup
+**Prerequisites:**
+1. Create Google Cloud Project
+2. Enable Gmail API
+3. Create OAuth2 credentials
+4. Add redirect URIs for your domain
+
+**Environment Variables to Add (.env.local):**
+```env
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+NEXT_PUBLIC_GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/gmail/callback
+```
+
+### Step 2: Database Schema Extension
+**New MongoDB Collection: `pending_transactions`**
+```javascript
+{
+  _id: ObjectId,
+  userId: String, // matches uid from existing system
+  emailId: String, // Gmail message ID
+  rawEmail: String, // Original email content
+  parsedData: {
+    amount: Number,
+    merchant: String,
+    paymentMethod: String, // PhonePe, GPay, Paytm, etc.
+    transactionId: String,
+    date: Date,
+    category: String, // auto-detected or null
+  },
+  status: String, // 'pending', 'approved', 'rejected'
+  confidence: Number, // 0-1 parsing confidence score
+  createdAt: Date,
+  processedAt: Date
+}
+```
+
+### Step 3: API Routes Structure
+**New API endpoints to create:**
+- `/api/email/connect` - Gmail OAuth flow
+- `/api/email/fetch` - Fetch recent payment emails
+- `/api/email/parse` - Parse payment details
+- `/api/transactions/pending` - Get pending transactions
+- `/api/transactions/approve` - Approve and move to budget
+
+### Step 4: Payment Detection Engine
+**Email Patterns for Indian Payment Apps:**
+- PhonePe: "You paid ₹[amount] to [merchant]"
+- GPay: "You sent ₹[amount] to [merchant]"
+- Paytm: "₹[amount] paid to [merchant]"
+- UPI: "UPI transaction successful"
+- Credit Card: "Transaction alert"
+
+## Phase 2: Implementation Steps
+
+### Step 1: Gmail Integration
+1. Create OAuth2 authentication flow
+2. Store Gmail tokens securely
+3. Implement email fetching with filters
+
+### Step 2: Payment Parser
+1. Build regex patterns for each payment provider
+2. Create confidence scoring system
+3. Implement merchant categorization
+
+### Step 3: User Interface
+1. Settings page for email connection
+2. Pending transactions review screen
+3. Bulk approve/reject functionality
+
+### Step 4: Integration with Existing Budget System
+1. Extend current `/api/budgetOperation` route
+2. Add new operation: 'processEmailTransaction'
+3. Maintain existing expense structure
+
+## Technical Architecture
+
+```
+Gmail API → Email Fetcher → Payment Parser → Pending Transactions DB → User Review → Budget System
+```
+
+## Security Considerations
+1. OAuth2 for secure Gmail access
+2. Encrypted token storage
+3. User consent for email access
+4. Data retention policies
+5. Error handling for API limits
+
+## User Experience Flow
+1. User connects Gmail account (one-time setup)
+2. System automatically fetches payment emails
+3. Parsed transactions appear in "Review Pending" section
+4. User approves/rejects/edits transactions
+5. Approved transactions automatically added to budget
+
+## Implementation Priority
+1. **High Priority:** Gmail OAuth, basic email fetching
+2. **Medium Priority:** Payment parsing engine, UI components
+3. **Low Priority:** Advanced categorization, bulk operations
+
+## Testing Strategy
+1. Test with sample payment emails
+2. Verify parsing accuracy across different providers
+3. Test OAuth flow and token refresh
+4. Load testing for email processing
+
+## Deployment Considerations
+1. Gmail API quotas and rate limits
+2. Background job processing for email fetching
+3. Error logging and monitoring
+4. User notification system
+
+## Future Enhancements
+1. SMS payment detection
+2. Bank statement integration
+3. Receipt scanning via photos
+4. Automatic category learning
+5. Spending pattern analysis
