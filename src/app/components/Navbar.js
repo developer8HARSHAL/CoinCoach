@@ -40,7 +40,8 @@ import {
 import {
   PiggyBank,
   Wallet,
-  CreditCard
+  CreditCard,
+  Lightbulb
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -195,11 +196,13 @@ export default function Navbar() {
     },
     { 
       title: "Games", 
-      href: "/gamehome",
+      href: "/game",
       icon: <FileSpreadsheet size={16} />,
       description: "Fun and educational games for financial literacy"
     }
   ];
+
+  const [showTipPopup, setShowTipPopup] = useState(false);
 
   return (
     <>
@@ -226,7 +229,25 @@ export default function Navbar() {
                     </Link>
                   </NavigationMenuItem>
                   
-            
+           
+
+      {/* Quiz Popup Modal */}
+       {showTipPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-md p-6 relative">
+            <button
+              onClick={() => setShowTipPopup(false)}
+              className="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-lg"
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-semibold mb-4 text-yellow-600">💡 Daily Finance Tip</h2>
+            <p className="text-gray-700">
+              Track your expenses daily. Even small purchases like coffee or snacks add up over time. Use a budget tracker app to stay on top of your money!
+            </p>
+          </div>
+        </div>
+      )}
               {/* Enhanced Courses Dropdown */}
 <NavigationMenuItem>
   <NavigationMenuTrigger className="group text-gray-700 font-medium hover:text-yellow-500 hover:bg-yellow-50/50">
@@ -316,6 +337,16 @@ export default function Navbar() {
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
+
+                   <NavigationMenuItem>
+        <button
+          onClick={() => setShowTipPopup(true)}
+          className="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-gray-700 font-medium transition-colors hover:text-yellow-500 hover:bg-yellow-50/50"
+        >
+            <Lightbulb className="mr-2 h-4 w-4" />
+          <span>Daily Tip</span>
+        </button>
+      </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
