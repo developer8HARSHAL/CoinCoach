@@ -43,7 +43,7 @@ const Gamehome = () => {
           <Button 
             variant="contained" 
             color="primary" 
-            onClick={() => router.push("/game")} // ✅ Use router.push
+            onClick={() => router.push("/games/timeforpayback")} // ✅ Use router.push
             className="start-btn"
           >
             Start Playing
