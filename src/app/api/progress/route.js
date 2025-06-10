@@ -18,14 +18,18 @@ export async function GET(request) {
     const userSnap = await getDoc(userDoc);
 
     if (!userSnap.exists()) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ 
+        modules: {},
+        completedCourses: []
+      });
     }
 
     const userData = userSnap.data();
     
-    // Return user progress data
+    // Return user progress data including completed courses
     return NextResponse.json({
       modules: userData.modules || {},
+      completedCourses: userData.completedCourses || []
     });
   } catch (error) {
     console.error("Error in progress API:", error);
@@ -35,7 +39,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { uid, moduleId, moduleName, completedSections, totalSections, progress } = await request.json();
+    const { uid, moduleId, moduleName, completedSections, totalSections, progress, markAsComplete } = await request.json();
 
     if (!uid || !moduleId) {
       return NextResponse.json({ error: "User ID and module ID are required" }, { status: 400 });
@@ -45,39 +49,71 @@ export async function POST(request) {
     const userDoc = doc(db, "users", uid);
     const userSnap = await getDoc(userDoc);
 
+    // Prepare the module data
+    const moduleData = {
+      moduleName,
+      completedSections,
+      totalSections,
+      progress: markAsComplete ? 100 : progress, // Ensure 100% when marking complete
+      lastUpdated: new Date().toISOString()
+    };
+
+    // If marking as complete, add completion data
+    if (markAsComplete) {
+      moduleData.isCompleted = true;
+      moduleData.completedAt = new Date().toISOString();
+      moduleData.progress = 100; // Guarantee 100% progress
+    }
+
+    let updatedCompletedCourses = [];
+
     // If user doesn't exist, initialize with empty data
     if (!userSnap.exists()) {
-      await setDoc(userDoc, { 
+      updatedCompletedCourses = markAsComplete ? [moduleId] : [];
+      
+      const newUserData = { 
         modules: {
-          [moduleId]: {
-            moduleName,
-            completedSections,
-            totalSections,
-            progress,
-            lastUpdated: new Date().toISOString()
-          }
-        }
-      });
+          [moduleId]: moduleData
+        },
+        completedCourses: updatedCompletedCourses
+      };
+      
+      await setDoc(userDoc, newUserData);
     } else {
       // Update existing user data
       const userData = userSnap.data();
+      const existingCompletedCourses = userData.completedCourses || [];
+      
+      // Update completed courses array if marking as complete
+      updatedCompletedCourses = [...existingCompletedCourses];
+      if (markAsComplete && !existingCompletedCourses.includes(moduleId)) {
+        updatedCompletedCourses.push(moduleId);
+      }
       
       await setDoc(userDoc, {
         ...userData,
         modules: {
           ...userData.modules,
-          [moduleId]: {
-            moduleName,
-            completedSections,
-            totalSections,
-            progress,
-            lastUpdated: new Date().toISOString()
-          }
-        }
+          [moduleId]: moduleData
+        },
+        completedCourses: updatedCompletedCourses
       });
     }
 
-    return NextResponse.json({ success: true });
+    console.log(`Course ${moduleId} completion status:`, {
+      isCompleted: markAsComplete,
+      progress: moduleData.progress,
+      completedCourses: updatedCompletedCourses
+    });
+
+    // Return comprehensive response for frontend sync
+    return NextResponse.json({ 
+      success: true,
+      isCompleted: markAsComplete,
+      progress: moduleData.progress,
+      completedCourses: updatedCompletedCourses,
+      moduleData: moduleData
+    });
   } catch (error) {
     console.error("Error saving progress:", error);
     return NextResponse.json({ error: "Failed to save progress" }, { status: 500 });

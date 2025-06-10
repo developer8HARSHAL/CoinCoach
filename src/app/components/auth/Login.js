@@ -180,14 +180,15 @@ export default function Login({ isOpen, onClose, onSwitchToSignup }) {
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
-                            <button
-                                type="button"
-                                onClick={() => handleSocialLogin('google')}
-                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                                <Image src="/google-icon.jpg" alt="Google" width={40} height={24} className="mr-2" />
-                                Google
-                            </button>
+                         <button
+  type="button"
+  onClick={() => window.location.href = '/api/gmail'}
+  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+>
+  <Image src="/google-icon.jpg" alt="Google" width={40} height={24} className="mr-2" />
+  Google
+</button>
+
 
                             <button
                                 type="button"
