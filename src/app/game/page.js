@@ -1,9 +1,9 @@
 import GameMenu from "../components/gameMenu";
-import SpotTheScam from "../components/spotTheSpam";
+import LoanLogicGame from "../components/loanLogic";
 export default function game(){
     return(
         // <Game/>
      <GameMenu/>
-    // <SpotTheScam/>
+    // <LoanLogicGame/>
     )
 }

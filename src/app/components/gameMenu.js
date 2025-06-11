@@ -21,9 +21,9 @@ export default function GameMenu() {
             link="/games/draganddrop"
           />
           <GameCard
-            name="Find Billing Mistakes"
+            name="Loan Logic"
             description="Spot the errors in fake bills and sharpen your attention to detail."
-            link="/games/find-billing-mistakes"
+            link="/games/loanlogic"
           />
           <GameCard
             name="Time For Payback"
@@ -41,9 +41,9 @@ export default function GameMenu() {
             link="/games/spotthescam"
           />
           <GameCard
-            name="UPI Safety Quiz"
+            name="Fraud Or Facts"
             description="Play a quick quiz to check your UPI transaction safety awareness."
-            link="/games/upi-safety-quiz"
+            link="/games/fraudandfact"
           />
         </div>
       </div>
