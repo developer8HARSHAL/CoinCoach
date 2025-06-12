@@ -1,0 +1,767 @@
+# CoinCoach Backend Architecture Documentation
+
+## Table of Contents
+1. [System Overview](#system-overview)
+2. [Technology Stack](#technology-stack)
+3. [Architecture Design](#architecture-design)
+4. [Database Design](#database-design)
+5. [Authentication System](#authentication-system)
+6. [API Endpoints Documentation](#api-endpoints-documentation)
+7. [Data Flow Diagrams](#data-flow-diagrams)
+8. [Security Implementation](#security-implementation)
+9. [Deployment Configuration](#deployment-configuration)
+
+---
+
+## System Overview
+
+**CoinCoach** is a comprehensive financial education platform built with Next.js that provides interactive learning modules, budget planning tools, and gamified experiences to teach financial literacy. The platform serves both adults (18+) and younger users with age-appropriate content.
+
+### Core Features
+- **User Management**: Registration, authentication, and profile management
+- **Learning Modules**: Interactive financial education courses
+- **Budget Planner**: Personal finance management tools
+- **Gamification**: Financial literacy games with scoring and history
+- **Progress Tracking**: Module completion and achievement systems
+- **Multi-Database Architecture**: Firebase for real-time data, MongoDB for complex operations
+
+---
+
+## Technology Stack
+
+### Backend Technologies
+- **Framework**: Next.js 15.1.6 (App Router)
+- **Runtime**: Node.js
+- **Language**: JavaScript (ES6+)
+
+### Databases
+- **Primary Database**: MongoDB Atlas (User data, budgets, game history)
+- **Secondary Database**: Firebase Firestore (Progress tracking, real-time updates)
+
+### Authentication
+- **Firebase Authentication**: User registration and login
+- **Firebase Admin SDK**: Server-side token verification
+- **Cookie-based Sessions**: Session management
+
+### Key Dependencies
+```json
+{
+  "firebase": "^11.3.1",
+  "firebase-admin": "^13.2.0",
+  "mongodb": "^6.14.0",
+  "next": "^15.1.6",
+  "react": "^18.3.1"
+}
+```
+
+---
+
+## Architecture Design
+
+### System Architecture Pattern
+The application follows a **Hybrid Multi-Database Architecture** with:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   API Routes    │    │   Databases     │
+│   (Next.js)     │◄──►│   (Next.js)     │◄──►│   (Multi-DB)    │
+│                 │    │                 │    │                 │
+│ - React Pages   │    │ - RESTful APIs  │    │ - MongoDB       │
+│ - Components    │    │ - Middleware    │    │ - Firebase      │
+│ - State Mgmt    │    │ - Auth Logic    │    │ - Caching       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Database Strategy
+- **MongoDB**: Complex business logic, user profiles, budget data, game history
+- **Firebase Firestore**: Real-time progress tracking, module completion status
+- **Rationale**: Leverage MongoDB's query capabilities for complex operations and Firebase's real-time features for progress tracking
+
+---
+
+## Database Design
+
+### MongoDB Collections
+
+#### 1. **users** Collection
+```javascript
+{
+  _id: ObjectId,
+  uid: String,              // Firebase UID
+  email: String,            // User email (unique)
+  name: String,             // Display name
+  displayName: String,      // Alternative display name
+  createdAt: Date,
+  updatedAt: Date,
+  
+  // Game-related fields
+  gameHistory: [            // Array of game results
+    {
+      score: Number,
+      level: String,
+      timestamp: Date,
+      gameType: String
+    }
+  ],
+  totalGamesPlayed: Number,
+  bestGameScore: Number,
+  lastGamePlayed: Date
+}
+```
+
+#### 2. **budgets** Collection
+```javascript
+{
+  _id: ObjectId,
+  userId: String,           // Firebase UID reference
+  income: Number,           // Monthly income
+  expenses: [               // Array of expenses
+    {
+      _id: String,          // Unique expense ID
+      category: String,     // Expense category
+      amount: Number,       // Expense amount
+      description: String,
+      date: Date,
+      updatedAt: Date
+    }
+  ],
+  achievements: [           // Budget achievements
+    {
+      _id: String,
+      title: String,
+      description: String,
+      date: Date
+    }
+  ],
+  goals: Array,             // Financial goals
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### 3. **games** Collection
+```javascript
+{
+  _id: ObjectId,
+  email: String,            // User email reference
+  score: Number,            // Game score
+  level: String,            // Game level/difficulty
+  gameType: String,         // Type of game played
+  timestamp: Date,          // When game was played
+  additionalData: Object    // Game-specific data
+}
+```
+
+### Firebase Firestore Structure
+
+#### 1. **users/{uid}** Document
+```javascript
+{
+  modules: {                // Progress tracking per module
+    [moduleId]: {
+      moduleName: String,
+      completedSections: Number,
+      totalSections: Number,
+      progress: Number,     // Percentage (0-100)
+      isCompleted: Boolean,
+      completedAt: String,  // ISO date
+      lastUpdated: String   // ISO date
+    }
+  },
+  completedCourses: [String], // Array of completed module IDs
+  createdAt: String,
+  updatedAt: String
+}
+```
+
+---
+
+## Authentication System
+
+### Firebase Authentication Flow
+
+```
+User Registration/Login
+         ↓
+Firebase Auth (Client)
+         ↓
+ID Token Generation
+         ↓
+Cookie Storage (Client)
+         ↓
+Server-side Verification
+         ↓
+Database Operations
+```
+
+### Authentication Implementation
+
+#### Client-Side Authentication
+```javascript
+// Firebase client configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDNsQ5NhfKmCr6T45GGl-TiFWq9EOsxyJs",
+  authDomain: "coincoach-f7908.firebaseapp.com",
+  projectId: "coincoach-f7908",
+  // ... other config
+};
+```
+
+#### Server-Side Token Verification
+```javascript
+// Get user from cookies
+async function getCurrentUserEmail() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('firebaseSessionToken');
+  const authCookie = cookieStore.get('firebaseUserEmail');
+  return authCookie ? authCookie.value : null;
+}
+```
+
+### Security Features
+- **Firebase ID Tokens**: Secure authentication tokens
+- **Cookie-based Sessions**: HTTP-only cookies for session management
+- **Server-side Validation**: All API requests validate authentication
+- **Environment Variables**: Sensitive credentials stored securely
+
+---
+
+## API Endpoints Documentation
+
+### Authentication Endpoints
+
+#### `POST /api/signup`
+**Purpose**: User registration
+```javascript
+// Request Body
+{
+  "fullName": "John Doe",
+  "emailOrPhone": "john@example.com",
+  "passcode": "password123"
+}
+
+// Response
+{
+  "success": true
+}
+```
+
+#### `POST /api/verifyToken`
+**Purpose**: Verify Firebase ID token
+```javascript
+// Request Body
+{
+  "token": "firebase_id_token"
+}
+
+// Response
+{
+  "uid": "user_firebase_uid",
+  "email": "user@example.com"
+}
+```
+
+### User Management Endpoints
+
+#### `GET /api/user`
+**Purpose**: Get current user data
+```javascript
+// Headers: Cookies with auth info
+// Response
+{
+  "_id": "mongodb_object_id",
+  "email": "user@example.com",
+  "name": "User Name",
+  "gameHistory": [...],
+  "totalGamesPlayed": 5,
+  "bestGameScore": 850
+}
+```
+
+#### `PUT /api/user`
+**Purpose**: Update user profile
+```javascript
+// Request Body
+{
+  "name": "Updated Name",
+  "otherField": "value"
+}
+
+// Response
+{
+  // Updated user object
+}
+```
+
+### Budget Management Endpoints
+
+#### `POST /api/budgetOperation`
+**Purpose**: Handle all budget operations
+```javascript
+// Set Income
+{
+  "uid": "user_firebase_uid",
+  "operation": "setIncome",
+  "data": {
+    "income": 50000
+  }
+}
+
+// Add Expense
+{
+  "uid": "user_firebase_uid",
+  "operation": "addExpense",
+  "data": {
+    "expense": {
+      "category": "Food",
+      "amount": 500,
+      "description": "Groceries"
+    }
+  }
+}
+
+// Update Expense
+{
+  "uid": "user_firebase_uid",
+  "operation": "updateExpense",
+  "data": {
+    "expenseId": "expense_id",
+    "expense": {
+      "category": "Food",
+      "amount": 600,
+      "description": "Updated groceries"
+    }
+  }
+}
+
+// Delete Expense
+{
+  "uid": "user_firebase_uid",
+  "operation": "deleteExpense",
+  "data": {
+    "expenseId": "expense_id"
+  }
+}
+
+// Get Data
+{
+  "uid": "user_firebase_uid",
+  "operation": "getData"
+}
+```
+
+#### `GET /api/budgetOperation?uid={uid}&operation=getData`
+**Purpose**: Retrieve budget data
+```javascript
+// Response
+{
+  "success": true,
+  "data": {
+    "income": 50000,
+    "expenses": [...],
+    "achievements": [...]
+  }
+}
+```
+
+### Progress Tracking Endpoints
+
+#### `GET /api/progress?uid={uid}`
+**Purpose**: Get user's module progress
+```javascript
+// Response
+{
+  "modules": {
+    "module1": {
+      "moduleName": "Budgeting Basics",
+      "completedSections": 3,
+      "totalSections": 5,
+      "progress": 60,
+      "isCompleted": false,
+      "lastUpdated": "2024-01-15T10:30:00.000Z"
+    }
+  },
+  "completedCourses": ["module2", "module3"]
+}
+```
+
+#### `POST /api/progress`
+**Purpose**: Update module progress
+```javascript
+// Request Body
+{
+  "uid": "user_firebase_uid",
+  "moduleId": "module1",
+  "moduleName": "Budgeting Basics",
+  "completedSections": 4,
+  "totalSections": 5,
+  "progress": 80,
+  "markAsComplete": false
+}
+
+// Response
+{
+  "success": true,
+  "isCompleted": true,
+  "progress": 100,
+  "completedCourses": ["module1", "module2"],
+  "moduleData": {
+    "moduleName": "Budgeting Basics",
+    "completedSections": 5,
+    "totalSections": 5,
+    "progress": 100,
+    "isCompleted": true,
+    "completedAt": "2024-01-15T10:35:00.000Z"
+  }
+}
+```
+
+### Game System Endpoints
+
+#### `GET /api/user/games?email={email}`
+**Purpose**: Get user's game statistics
+```javascript
+// Response
+{
+  "totalGamesPlayed": 15,
+  "bestGameScore": 950,
+  "lastGamePlayed": "2024-01-15T10:30:00.000Z",
+  "gameHistory": [...]
+}
+```
+
+#### `GET /api/user/gamehistory?email={email}`
+**Purpose**: Get detailed game history
+```javascript
+// Response
+{
+  "gameHistory": [
+    {
+      "score": 850,
+      "level": "intermediate",
+      "date": "2024-01-15T10:30:00.000Z",
+      "gameType": "budgeting"
+    }
+  ],
+  "bestGameScore": 950,
+  "totalGamesPlayed": 15
+}
+```
+
+#### `POST /api/user/savegame`
+**Purpose**: Save game result
+```javascript
+// Request Body
+{
+  "email": "user@example.com",
+  "gameResult": {
+    "score": 850,
+    "level": "intermediate",
+    "gameType": "budgeting",
+    "additionalData": {...}
+  }
+}
+
+// Response
+{
+  "success": true,
+  "message": "Game result saved successfully"
+}
+```
+
+---
+
+## Data Flow Diagrams
+
+### User Registration Flow
+```
+1. User submits registration form
+   ↓
+2. Frontend calls Firebase Auth
+   ↓
+3. Firebase creates user account
+   ↓
+4. Frontend calls /api/signup
+   ↓
+5. Backend saves user to MongoDB
+   ↓
+6. User profile created
+```
+
+### Budget Management Flow
+```
+1. User performs budget action
+   ↓
+2. Frontend calls /api/budgetOperation
+   ↓
+3. Backend validates user auth
+   ↓
+4. MongoDB operations executed
+   ↓
+5. Response sent to frontend
+   ↓
+6. UI updated with new data
+```
+
+### Progress Tracking Flow
+```
+1. User completes module section
+   ↓
+2. Frontend calls /api/progress
+   ↓
+3. Backend updates Firebase Firestore
+   ↓
+4. Real-time progress sync
+   ↓
+5. UI reflects updated progress
+   ↓
+6. Achievement system triggered
+```
+
+### Game System Flow
+```
+1. User plays game
+   ↓
+2. Game completion triggers save
+   ↓
+3. Frontend calls /api/user/savegame
+   ↓
+4. Backend updates MongoDB
+   ↓
+5. Game statistics updated
+   ↓
+6. Leaderboard/history updated
+```
+
+---
+
+## Security Implementation
+
+### Authentication Security
+- **Firebase ID Tokens**: Cryptographically signed tokens
+- **Server-side Verification**: All API endpoints verify authentication
+- **Cookie Security**: HTTP-only cookies prevent XSS attacks
+- **Environment Variables**: Sensitive data stored securely
+
+### Data Validation
+- **Input Sanitization**: All user inputs validated and sanitized
+- **Type Checking**: Strict type validation for all data operations
+- **Error Handling**: Comprehensive error handling prevents data leaks
+
+### Database Security
+- **MongoDB Atlas**: Enterprise-grade security and encryption
+- **Firebase Security Rules**: Firestore security rules protect data
+- **Connection Encryption**: All database connections use TLS/SSL
+
+### API Security
+- **CORS Configuration**: Proper CORS settings for API endpoints
+- **Rate Limiting**: Protection against API abuse
+- **Error Messages**: Generic error messages prevent information disclosure
+
+---
+
+## Deployment Configuration
+
+### Environment Variables
+```bash
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Database Configuration
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+
+# Firebase Admin SDK
+FIREBASE_ADMIN_CREDENTIALS_JSON={"type":"service_account"...}
+
+# Optional OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+NEXT_PUBLIC_GOOGLE_REDIRECT_URI=your_redirect_uri
+```
+
+### Production Considerations
+- **Environment Separation**: Different configs for dev/staging/production
+- **Secret Management**: Use secure secret management services
+- **Monitoring**: Implement logging and monitoring for production
+- **Backup Strategy**: Regular database backups and disaster recovery
+- **Scaling**: Consider database scaling and caching strategies
+
+### Deployment Platforms
+- **Vercel**: Recommended for Next.js applications
+- **MongoDB Atlas**: Cloud-hosted MongoDB with global distribution
+- **Firebase**: Google's cloud platform for authentication and Firestore
+
+---
+
+## API Error Handling
+
+### Standard Error Responses
+```javascript
+// Authentication Error
+{
+  "error": "Not authenticated",
+  "status": 401
+}
+
+// Validation Error
+{
+  "error": "Missing required fields",
+  "status": 400
+}
+
+// Server Error
+{
+  "error": "Internal server error",
+  "status": 500
+}
+
+// Not Found Error
+{
+  "error": "User not found",
+  "status": 404
+}
+```
+
+### Error Handling Strategy
+- **Graceful Degradation**: Application continues to function with reduced features
+- **User-Friendly Messages**: Generic error messages for security
+- **Logging**: Detailed server-side logging for debugging
+- **Retry Logic**: Automatic retry for transient failures
+
+---
+
+## Performance Optimizations
+
+### Database Optimization
+- **Indexing**: Proper indexes on frequently queried fields
+- **Connection Pooling**: Efficient database connection management
+- **Query Optimization**: Optimized queries to reduce response times
+
+### Caching Strategy
+- **Memory Caching**: In-memory caching for frequently accessed data
+- **CDN**: Static asset delivery through CDN
+- **API Response Caching**: Cache API responses where appropriate
+
+### Code Optimization
+- **Lazy Loading**: Load components and data as needed
+- **Bundle Optimization**: Minimize JavaScript bundle sizes
+- **Image Optimization**: Optimized image delivery
+
+---
+
+This comprehensive documentation provides a complete overview of the CoinCoach backend architecture, enabling team members to understand the system design, implementation details, and deployment requirements. The modular design allows for easy maintenance and future enhancements while ensuring scalability and security.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Key Highlights of Your Backend Architecture:
+Hybrid Multi-Database Design
+
+MongoDB: Handles complex business logic, user profiles, budget data, and game history
+Firebase Firestore: Manages real-time progress tracking and module completion
+This dual-database approach leverages the strengths of both systems
+
+Robust Authentication System
+
+1. Firebase Authentication for user management
+2. Cookie-based session handling
+3. Server-side token verification
+4. Comprehensive security measures
+
+Comprehensive API Design
+Backend has 7 major API endpoint groups:
+
+1. User Management - Profile creation and updates
+2. Budget Operations - Complete CRUD for budget management
+3. Progress Tracking - Real-time learning progress
+4. Game System - Game statistics and history
+5. Authentication - User registration and verification
+
+Notable Architecture Strengths
+
+1. Separation of Concerns: Clear separation between different data types
+2. Scalable Design: Can handle growth in users and data
+3. Security First: Multiple layers of security implementation
+4. Error Handling: Comprehensive error management
+5. Real-time Capabilities: Firebase integration for live updates
+
+The documentation is structured to helps to understand:
+
+1. How data flows through the system
+2. Database relationships and schema design
+3. API endpoint specifications with examples
+4. Security implementation details
+5. Deployment and environment configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  email: "user@example.com",
+  gamesPlayed: [  // Which games were played (unique games)
+    {
+      gameId: "drag-drop-budget",
+      gameName: "Drag and Drop",
+      gameDescription: "...",
+      gameLink: "/games/draganddrop",
+      playedAt: Date,
+      timesPlayed: 3,
+      lastPlayedAt: Date
+    }
+  ],
+  gameHistory: [  // Detailed history of all game sessions
+    {
+      gameId: "drag-drop-budget",
+      gameName: "Drag and Drop",
+      score: 85,
+      level: 2,
+      duration: 120,
+      completed: true,
+      timestamp: Date
+    }
+  ],
+  totalGamesPlayed: 15,        // Total game sessions
+  totalUniqueGamesPlayed: 6,   // Unique games played
+  bestGameScore: 95,
+  lastGamePlayed: Date
+}

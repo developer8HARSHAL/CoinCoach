@@ -1,5 +1,6 @@
 |-- .env.local
 |-- .gitignore
+|-- Backend_flow.txt
 |-- ck --lost-found
 |-- CNAME
 |-- components.json
@@ -69,7 +70,11 @@
                 |-- gamehistory
                     |-- route.js
                 |-- games
+                    |-- mark-played
+                        |-- route.js
                     |-- route.js
+                    |-- status
+                        |-- route.js
                 |-- index.js
                 |-- info
                     |-- route.js
@@ -82,8 +87,6 @@
                 |-- route.js
                 |-- savegame
                     |-- route.js
-            |-- users
-                |-- route.js
             |-- verifyToken.js
         |-- apps
             |-- page.js
@@ -113,6 +116,8 @@
                     |-- Theroy.js
                     |-- Welcome.js
                 |-- taxation
+                    |-- TaxGame1.js
+                    |-- TaxGame2.js
                     |-- TaxModule1.js
                     |-- TaxModule2.js
                     |-- TaxModule3.js
@@ -142,7 +147,6 @@
             |-- Course.js
             |-- CreditDebtModule.js
             |-- dashboard
-                |-- Dashboard.js
                 |-- EditProfileModal.js
                 |-- ModuleCard.js
                 |-- UserDataProvider.js
@@ -151,7 +155,9 @@
                 |-- Drag.js
                 |-- Drag_Drop.js
                 |-- Drop.js
+            |-- FinancialIndependence.js
             |-- Footer.js
+            |-- fraudOrFact.js
             |-- Game.js
             |-- gameCard.js
             |-- gamehome.css
@@ -160,17 +166,17 @@
             |-- gameQuestions.js
             |-- Homepage.js
             |-- LearningModule.js
-            |-- Level.js
             |-- loader
                 |-- LoadingProvider.js
                 |-- LoadingSpinner.js
+            |-- loanLogic.js
             |-- ModuleProgressWrapper.js
             |-- Navbar.js
-            |-- Quiz.js
             |-- Resources.js
             |-- Results.css
             |-- Results.js
             |-- Savings.js
+            |-- spotTheSpam.js
             |-- TaxModule.js
             |-- youngCourses
                 |-- bankStatementt.js
@@ -188,13 +194,14 @@
                 |-- page.js
         |-- creditdebt
             |-- page.js
-        |-- crs
-            |-- page.js
         |-- dashboard
+            |-- games
+                |-- page.js
             |-- layout.js
+            |-- modules
+                |-- page.js
             |-- page.js
-            |-- transactions
-                |-- addtracsactions.js
+            |-- profile
                 |-- page.js
         |-- data
             |-- courses.js
@@ -204,8 +211,21 @@
             |-- Firebase.js
         |-- game
             |-- page.js
-        |-- gamehome
-            |-- page.js
+        |-- games
+            |-- crossword
+                |-- page.js
+            |-- draganddrop
+                |-- page.js
+            |-- fraudandfact
+                |-- page.js
+            |-- gamehome
+                |-- page.js
+            |-- loanlogic
+                |-- page.js
+            |-- spotthescam
+                |-- page.js
+            |-- timeforpayback
+                |-- page.js
         |-- globals.css
         |-- investments
             |-- page.js
@@ -228,8 +248,6 @@
             |-- saving1.json
             |-- trophy.json
         |-- page.js
-        |-- quiz
-            |-- page.js
         |-- resources
             |-- page.js
         |-- results
@@ -271,6 +289,7 @@
         |-- firebase-admin.js
         |-- firebaseAdmin.js
         |-- mongodb.js
+        |-- navigation.js
         |-- utils.js
 |-- structure.txt
 |-- tailwind.config.js
