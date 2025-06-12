@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +24,10 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     profileImage: '',
     age: ''
   });
+
+  // Check if age has been set before (age edit is only allowed once)
+  const hasAgeBeenSet = userData?.demographics?.age && userData?.demographics?.ageVerified;
+  const isAgeEditable = !hasAgeBeenSet;
 
   // Update form data when userData changes or modal opens
   useEffect(() => {
@@ -79,9 +83,9 @@ const EditProfileModal = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if age was added or updated
-    const ageChanged = userData?.demographics?.age !== parseInt(formData.age);
-    const ageAdded = !userData?.demographics?.age && formData.age;
+    // Check if age was added or updated (only if it's editable)
+    const ageChanged = isAgeEditable && userData?.demographics?.age !== parseInt(formData.age);
+    const ageAdded = isAgeEditable && !userData?.demographics?.age && formData.age;
     
     // Create updated userData with age in demographics
     const updatedData = {
@@ -94,9 +98,14 @@ const EditProfileModal = ({ isOpen, onClose }) => {
       profileImage: formData.profileImage,
       demographics: {
         ...userData?.demographics,
-        age: parseInt(formData.age) || null,
-        ageGroup: parseInt(formData.age) < 18 ? "Under 18" : "Adult",
-        ageVerified: formData.age ? true : false,
+        // Only update age if it's editable, otherwise keep existing age
+        age: isAgeEditable ? (parseInt(formData.age) || null) : userData?.demographics?.age,
+        ageGroup: isAgeEditable ? 
+          (parseInt(formData.age) < 18 ? "Under 18" : "Adult") : 
+          userData?.demographics?.ageGroup,
+        ageVerified: isAgeEditable ? (formData.age ? true : false) : userData?.demographics?.ageVerified,
+        ageSetDate: isAgeEditable && formData.age && !userData?.demographics?.ageSetDate ? 
+          new Date().toISOString() : userData?.demographics?.ageSetDate,
         updatedAt: new Date().toISOString()
       },
       lastUpdated: new Date().toISOString(),
@@ -113,9 +122,9 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     if (ageAdded || ageChanged) {
       toast({
         title: ageAdded ? "Age Information Added" : "Age Information Updated",
-        description: "Your learning content will be personalized based on your age.",
+        description: "Your learning content will be personalized based on your age. Note: Age can only be set once for security purposes.",
         variant: "default",
-        duration: 5000
+        duration: 6000
       });
     }
     
@@ -152,7 +161,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
           <Input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Full Name" required />
           <Input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" required />
           
-          {/* Age input field with a note about personalization */}
+          {/* Age input field with restriction message */}
           <div>
             <label htmlFor="age" className="block text-sm font-medium text-gray-500 mb-1">
               Age <span className="text-blue-500 text-xs">(Used for content personalization)</span>
@@ -165,8 +174,31 @@ const EditProfileModal = ({ isOpen, onClose }) => {
               max="120"
               value={formData.age} 
               onChange={handleChange}
-              placeholder="Enter your age" 
+              placeholder="Enter your age"
+              disabled={!isAgeEditable}
+              className={!isAgeEditable ? "bg-gray-100 cursor-not-allowed" : ""}
             />
+            {!isAgeEditable && (
+              <div className="flex items-center mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                <AlertCircle className="h-4 w-4 text-amber-500 mr-2 flex-shrink-0" />
+                <p className="text-xs text-amber-700">
+                  Age can only be set once for security and content filtering purposes. 
+                  {userData?.demographics?.ageSetDate && (
+                    <span className="block mt-1">
+                      Set on: {new Date(userData.demographics.ageSetDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+            {isAgeEditable && !formData.age && (
+              <div className="flex items-center mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <AlertCircle className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                <p className="text-xs text-blue-700">
+                  Please note: Once you set your age, it cannot be changed later for security purposes.
+                </p>
+              </div>
+            )}
           </div>
           
           <Input type="text" name="jobTitle" value={formData.jobTitle} onChange={handleChange} placeholder="Job Title" />

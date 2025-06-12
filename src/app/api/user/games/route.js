@@ -1,4 +1,4 @@
-// /app/api/user/games/route.js
+// src/app/api/user/games/route.js
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 
@@ -14,35 +14,56 @@ export async function GET(request) {
       }, { status: 400 });
     }
 
+    console.log('Fetching game data for:', email);
+
     // Connect to MongoDB
     const { db } = await connectToDatabase();
+    const userCollection = db.collection('users');
     
-    // Find all game records for this user
-    const gameHistory = await db
-      .collection('games')
-      .find({ email: email })
-      .sort({ timestamp: -1 }) // Sort by most recent first
-      .toArray();
+    // Find user document
+    const user = await userCollection.findOne({ email });
     
-    // Calculate statistics from game history
-    const totalGamesPlayed = gameHistory.length;
+    if (!user) {
+      return NextResponse.json({
+        totalGamesPlayed: 0,
+        totalUniqueGamesPlayed: 0,
+        bestGameScore: 0,
+        lastGamePlayed: null,
+        gamesPlayed: [],
+        gameHistory: []
+      });
+    }
     
-    // Find highest score
+    // Extract game data from user document
+    const gamesPlayed = user.gamesPlayed || [];
+    const gameHistory = user.gameHistory || [];
+    const totalGamesPlayed = user.totalGamesPlayed || 0;
+    const totalUniqueGamesPlayed = user.totalUniqueGamesPlayed || gamesPlayed.length;
+    
+    // Calculate best score from game history
     const bestGameScore = gameHistory.length > 0 
       ? Math.max(...gameHistory.map(game => game.score || 0))
       : 0;
     
     // Get date of last game played
-    const lastGamePlayed = gameHistory.length > 0 
-      ? gameHistory[0].timestamp 
-      : null;
+    const lastGamePlayed = user.lastGamePlayed || 
+      (gameHistory.length > 0 ? gameHistory[gameHistory.length - 1].timestamp : null) ||
+      (gamesPlayed.length > 0 ? gamesPlayed[gamesPlayed.length - 1].lastPlayedAt || gamesPlayed[gamesPlayed.length - 1].playedAt : null);
 
-    // Return the data
+    // Return comprehensive game data
     return NextResponse.json({
       totalGamesPlayed,
+      totalUniqueGamesPlayed,
       bestGameScore,
       lastGamePlayed,
-      gameHistory
+      gamesPlayed: gamesPlayed.map(game => ({
+        gameId: game.gameId,
+        gameName: game.gameName,
+        timesPlayed: game.timesPlayed,
+        firstPlayedAt: game.playedAt,
+        lastPlayedAt: game.lastPlayedAt || game.playedAt
+      })),
+      gameHistory: gameHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     });
   } catch (error) {
     console.error('Error fetching game data:', error);
