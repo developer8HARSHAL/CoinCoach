@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../components/auth/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -18,11 +19,16 @@ import {
   Award,
   Filter,
   Search,
-  TrendingUp
+  TrendingUp,
+  Loader2,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-function ModuleCard({ module, onStartModule, onContinueModule }) {
-  const { id, title, description, duration, difficulty, progress, status, category, rating, enrolledUsers } = module;
+function ModuleCard({ module, onStartModule, onContinueModule, loading }) {
+  const { id, title, description, duration, difficulty, progress, status, category, rating, enrolledUsers, imageUrl } = module;
   
   const getStatusIcon = () => {
     switch (status) {
@@ -77,6 +83,20 @@ function ModuleCard({ module, onStartModule, onContinueModule }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Module Image */}
+          {imageUrl && (
+            <div className="w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+              <img 
+                src={imageUrl} 
+                alt={title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+
           {/* Module Stats */}
           <div className="flex items-center space-x-4 text-sm text-gray-500">
             <div className="flex items-center">
@@ -108,13 +128,22 @@ function ModuleCard({ module, onStartModule, onContinueModule }) {
           <div className="flex justify-between items-center">
             <span className="text-xs text-gray-500">Category: {category}</span>
             {status === 'available' && (
-              <Button onClick={() => onStartModule(id)} size="sm">
-                Start Module
+              <Button 
+                onClick={() => onStartModule(module)} 
+                size="sm"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Start Module'}
               </Button>
             )}
             {status === 'in-progress' && (
-              <Button onClick={() => onContinueModule(id)} size="sm" variant="outline">
-                Continue
+              <Button 
+                onClick={() => onContinueModule(module)} 
+                size="sm" 
+                variant="outline"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continue'}
               </Button>
             )}
             {status === 'completed' && (
@@ -136,17 +165,39 @@ function ModuleCard({ module, onStartModule, onContinueModule }) {
   );
 }
 
-function ModuleStats() {
-  const stats = [
-    { label: 'Total Modules', value: '25', icon: BookOpen },
-    { label: 'Completed', value: '12', icon: CheckCircle },
-    { label: 'In Progress', value: '3', icon: PlayCircle },
-    { label: 'Achievements', value: '8', icon: Award }
+function ModuleStats({ stats, loading }) {
+  const statItems = [
+    { label: 'Total Modules', value: stats?.total || 0, icon: BookOpen },
+    { label: 'Completed', value: stats?.completed || 0, icon: CheckCircle },
+    { label: 'In Progress', value: stats?.inProgress || 0, icon: PlayCircle },
+    { label: 'Available', value: stats?.available || 0, icon: Award }
   ];
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gray-100 rounded-lg animate-pulse">
+                  <div className="w-5 h-5 bg-gray-300 rounded" />
+                </div>
+                <div>
+                  <div className="h-6 bg-gray-300 rounded animate-pulse w-8 mb-1" />
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-16" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      {stats.map((stat, index) => {
+      {statItems.map((stat, index) => {
         const Icon = stat.icon;
         return (
           <Card key={index}>
@@ -168,14 +219,32 @@ function ModuleStats() {
   );
 }
 
-function CompletionOverview() {
-  const categories = [
-    { name: 'Budgeting', completed: 4, total: 6, color: 'bg-blue-500' },
-    { name: 'Investing', completed: 2, total: 5, color: 'bg-green-500' },
-    { name: 'Savings', completed: 3, total: 4, color: 'bg-yellow-500' },
-    { name: 'Debt Management', completed: 1, total: 3, color: 'bg-red-500' },
-    { name: 'Tax Planning', completed: 2, total: 7, color: 'bg-purple-500' }
-  ];
+function CompletionOverview({ categoryStats, loading }) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            Completion by Category
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="h-4 bg-gray-300 rounded animate-pulse w-20" />
+                  <div className="h-3 bg-gray-200 rounded animate-pulse w-12" />
+                </div>
+                <div className="h-2 bg-gray-200 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -187,8 +256,8 @@ function CompletionOverview() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {categories.map((category, index) => {
-            const percentage = Math.round((category.completed / category.total) * 100);
+          {categoryStats?.map((category, index) => {
+            const percentage = category.total > 0 ? Math.round((category.completed / category.total) * 100) : 0;
             return (
               <div key={index} className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -207,83 +276,173 @@ function CompletionOverview() {
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="grid gap-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 bg-gray-300 rounded" />
+                <div className="h-5 bg-gray-300 rounded w-40" />
+              </div>
+              <div className="h-5 bg-gray-200 rounded w-16" />
+            </div>
+            <div className="h-4 bg-gray-200 rounded w-full mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <div className="h-4 bg-gray-200 rounded w-16" />
+                <div className="h-4 bg-gray-200 rounded w-12" />
+                <div className="h-4 bg-gray-200 rounded w-8" />
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="h-3 bg-gray-200 rounded w-20" />
+                <div className="h-8 bg-gray-300 rounded w-24" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function ModulesPage() {
   const [activeTab, setActiveTab] = useState('all');
+  const [modules, setModules] = useState([]);
+  const [stats, setStats] = useState({});
+  const [categoryStats, setCategoryStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
 
-  // Sample module data
-  const modules = [
-    {
-      id: 1,
-      title: 'Budgeting Fundamentals',
-      description: 'Learn the basics of creating and managing a personal budget',
-      duration: '45 min',
-      difficulty: 'Beginner',
-      progress: 100,
-      status: 'completed',
-      category: 'Budgeting',
-      rating: 4.8,
-      enrolledUsers: '1.2k'
-    },
-    {
-      id: 2,
-      title: 'Investment Strategies',
-      description: 'Explore different investment options and strategies for beginners',
-      duration: '60 min',
-      difficulty: 'Intermediate',
-      progress: 65,
-      status: 'in-progress',
-      category: 'Investing',
-      rating: 4.9,
-      enrolledUsers: '950'
-    },
-    {
-      id: 3,
-      title: 'Emergency Fund Planning',
-      description: 'Build and maintain an emergency fund for financial security',
-      duration: '30 min',
-      difficulty: 'Beginner',
-      progress: 0,
-      status: 'available',
-      category: 'Savings',
-      rating: 4.7,
-      enrolledUsers: '800'
-    },
-    {
-      id: 4,
-      title: 'Advanced Portfolio Management',
-      description: 'Advanced techniques for managing investment portfolios',
-      duration: '90 min',
-      difficulty: 'Advanced',
-      progress: 0,
-      status: 'locked',
-      category: 'Investing',
-      rating: 4.6,
-      enrolledUsers: '320'
-    }
-  ];
-
-  const handleStartModule = (moduleId) => {
-    console.log('Starting module:', moduleId);
-    // Implementation would go here
-  };
-
-  const handleContinueModule = (moduleId) => {
-    console.log('Continuing module:', moduleId);
-    // Implementation would go here
-  };
-
-  const filterModules = (filter) => {
-    switch (filter) {
-      case 'completed':
-        return modules.filter(m => m.status === 'completed');
-      case 'in-progress':
-        return modules.filter(m => m.status === 'in-progress');
-      case 'available':
-        return modules.filter(m => m.status === 'available');
-      default:
-        return modules;
+  // Fetch modules data
+  const fetchModules = async (category = 'all', status = 'all') => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams();
+      if (category !== 'all') params.append('category', category);
+      if (status !== 'all') params.append('status', status);
+      
+      const response = await fetch(`/api/modules?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch modules: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      setModules(data.modules || []);
+      setStats(data.stats || {});
+      setCategoryStats(data.categoryStats || []);
+      
+    } catch (err) {
+      console.error('Error fetching modules:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Initial load
+  useEffect(() => {
+    fetchModules();
+  }, []);
+
+  // Refetch when tab changes
+  useEffect(() => {
+    if (activeTab !== 'all') {
+      fetchModules('all', activeTab);
+    } else {
+      fetchModules();
+    }
+  }, [activeTab]);
+
+  const handleStartModule = async (module) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      // Update progress to indicate module started
+      const response = await fetch('/api/modules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          moduleId: module.id,
+          courseId: module.courseId,
+          progress: 1,
+          status: 'in-progress',
+          completedSections: 0,
+          totalSections: 1
+        }),
+      });
+
+      if (response.ok) {
+        // Navigate to the course page
+        router.push(`/courses/${module.courseId}`);
+      } else {
+        throw new Error('Failed to start module');
+      }
+    } catch (err) {
+      console.error('Error starting module:', err);
+      setError('Failed to start module. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleContinueModule = async (module) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    // Navigate to the course page
+    router.push(`/courses/${module.courseId}`);
+  };
+
+  const handleRefresh = () => {
+    fetchModules();
+  };
+
+  if (error && !loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Learning Modules</h1>
+            <p className="text-gray-600">Track your progress and continue learning</p>
+          </div>
+        </div>
+        
+        <Card className="p-6">
+          <div className="flex flex-col items-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-red-500" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900">Error Loading Modules</h3>
+              <p className="text-gray-600 mt-1">{error}</p>
+            </div>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -292,21 +451,22 @@ export default function ModulesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Learning Modules</h1>
           <p className="text-gray-600">Track your progress and continue learning</p>
+          {!user && (
+            <p className="text-sm text-amber-600 mt-1">
+              <Link href="/auth/login" className="underline">Sign in</Link> to track your progress
+            </p>
+          )}
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-          <Button variant="outline" size="sm">
-            <Search className="w-4 h-4 mr-2" />
-            Search
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
         </div>
       </div>
 
       {/* Stats Overview */}
-      <ModuleStats />
+      <ModuleStats stats={stats} loading={loading} />
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -320,23 +480,41 @@ export default function ModulesPage() {
               <TabsTrigger value="available">Available</TabsTrigger>
             </TabsList>
             <TabsContent value={activeTab} className="mt-6">
-              <div className="grid gap-4">
-                {filterModules(activeTab).map((module) => (
-                  <ModuleCard
-                    key={module.id}
-                    module={module}
-                    onStartModule={handleStartModule}
-                    onContinueModule={handleContinueModule}
-                  />
-                ))}
-              </div>
+              {loading ? (
+                <LoadingSkeleton />
+              ) : modules.length === 0 ? (
+                <Card className="p-6">
+                  <div className="text-center">
+                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900">No modules found</h3>
+                    <p className="text-gray-600 mt-1">
+                      {activeTab === 'all' 
+                        ? 'No modules available at the moment.'
+                        : `No ${activeTab.replace('-', ' ')} modules found.`
+                      }
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {modules.map((module) => (
+                    <ModuleCard
+                      key={module.id}
+                      module={module}
+                      onStartModule={handleStartModule}
+                      onContinueModule={handleContinueModule}
+                      loading={actionLoading}
+                    />
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
 
         {/* Sidebar */}
         <div>
-          <CompletionOverview />
+          <CompletionOverview categoryStats={categoryStats} loading={loading} />
         </div>
       </div>
     </div>
