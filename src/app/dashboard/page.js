@@ -17,7 +17,7 @@ import {
   Activity,
   Loader2
 } from 'lucide-react';
-import { useUserData, UserDataProvider } from '@/app/components/dashboard/UserDataProvider';
+import { useUserData, UserDataProvider } from '@/components/dashboard/UserDataProvider';
 
 
 function StatCard({ title, value, change, icon: Icon, trend = 'up', loading = false }) {
