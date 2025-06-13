@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 // Fix the import path - EditProfileModal is in the components/dashboard directory
-import EditProfileModal from '../../components/dashboard/EditProfileModal';
+import EditProfileModal from '@/app/components/dashboard/EditProfileModal';
 import { useUserData } from '@/app/components/dashboard/UserDataProvider';
 
 const UserProfile = () => {
