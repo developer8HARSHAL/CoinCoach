@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { UserDataProvider } from '@/app/components/dashboard/UserDataProvider';
+import { UserDataProvider } from '@/components/dashboard/UserDataProvider';
 
 const navigationItems = [
   {
