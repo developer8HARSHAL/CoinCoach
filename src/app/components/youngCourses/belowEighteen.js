@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { FaChartLine, FaLightbulb } from "react-icons/fa";
 import { useAuth } from "../../components/auth/AuthContext";
+import OpportunityCostModule from "./opportunityCost";
+import SimpleVsCompoundInterest from "./interests";
+import BankStatementModule from "./bankStatementt";
 
 // This module is now a single learning module component, not a container
 export default function TimeValueOfMoneyModule({ onNext }) {
@@ -14,6 +17,49 @@ export default function TimeValueOfMoneyModule({ onNext }) {
     setShowAnswer(true);
   };
 
+  const getProgressPercentage = () => (currentModule / totalModules) * 100;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 px-6 py-10">
+      <div className="max-w-6xl mx-auto space-y-10">
+
+        {/* 📊 Progress Bar */}
+        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-purple-500 transition-all duration-500"
+            style={{ width: `${getProgressPercentage()}%` }}
+          ></div>
+        </div>
+        <p className="text-right text-sm text-gray-600">
+          Module {currentModule} of {totalModules}
+        </p>
+
+        {currentModule === 1 && (
+          <TimeValueOfMoneyModule onNext={handleNext} />
+        )}
+
+        {currentModule === 2 && (
+          <InflationImpactModule onNext={handleNext}/>
+        )}
+
+        {currentModule === 3 && (
+          <OpportunityCostModule onNext={handleNext}/>
+        )}
+
+        {currentModule === 4 && (
+          <SimpleVsCompoundInterest onNext={handleNext}/>
+        )}
+
+        {currentModule === 5 && (
+          <BankStatementModule onNext={handleNext}/>
+        )}
+        
+      </div>
+    </div>
+  );
+}
+
+function TimeValueOfMoneyModule({ onNext }) {
   return (
     <div className="space-y-20">
 
