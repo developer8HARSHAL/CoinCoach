@@ -44,7 +44,7 @@ import {
   EditNote,
 } from "@mui/icons-material";
 import { useAuth } from "../components/auth/AuthContext";
-import { useUserData } from "../components/dashboard/UserDataProvider";
+import { useUserData } from "@/app/components/dashboard/UserDataProvider";
 
 const Results = () => {
   const router = useRouter();
